@@ -1,0 +1,27 @@
+package routers
+
+import (
+	// "eksporin/modules/features/listing"
+	"eksporin/modules/features/users"
+	"eksporin/modules/middleware"
+
+	// "eksporin/modules/middleware"
+	"net/http"
+)
+
+func Router() {
+
+	mux := http.NewServeMux()
+	protectedMux := http.NewServeMux()
+
+	// PUBLIC
+	mux.HandleFunc("/register", users.CreateUserHandler)
+	mux.HandleFunc("/login", users.LoginUserHandler)
+
+	// PROTECTED
+	protectedMux.HandleFunc("/profile", users.ProfileRouter)
+
+	mux.Handle("/api/", http.StripPrefix("/api",middleware.JWTAuth(protectedMux)))
+
+	http.ListenAndServe(":8080", mux)
+}
