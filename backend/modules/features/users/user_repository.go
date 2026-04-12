@@ -36,3 +36,18 @@ func FindByID(id uuid.UUID) (*models.User, error) {
 	return &user, nil
 }
 
+func UpdateUser(user *models.User) error {
+	return config.DB.Save(user).Error
+}
+
+func FindByResetToken(token string) *models.User {
+	var user models.User
+
+	result := config.DB.Where("reset_token", token).First(&user)
+
+	if result.Error != nil {
+		return nil
+	}
+
+	return &user
+}
