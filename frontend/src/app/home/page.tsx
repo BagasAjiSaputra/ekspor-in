@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
     Search,
     MapPin,
@@ -50,9 +51,11 @@ const Navbar = () => (
             </div>
         </div>
         <div className="flex items-center gap-4">
-            <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors">
-                Daftar
-            </button>
+            <Link href="/register">
+                <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                    Daftar
+                </button>
+            </Link>
             <div className="flex items-center gap-3">
                 <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
                     <Bell size={20} className="text-gray-600" />
