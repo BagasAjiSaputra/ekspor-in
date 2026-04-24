@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Lock, Eye, EyeOff, Mail } from "lucide-react";
 
 // Brand Icons
 const GoogleIcon = () => (
@@ -22,45 +22,58 @@ const WhatsAppIcon = () => (
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        email: "",
+        password: ""
+    });
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log("Logging in with:", formData);
+        // Add login logic here
+    };
 
     return (
-        <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center p-6 relative overflow-hidden font-body">
             {/* Background Decoration */}
-            <div className="absolute right-[-10% ] top-[-10% ] w-[500px] h-[500px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
-            <div className="absolute left-[-10% ] bottom-[-10% ] w-[400px] h-[400px] bg-primary/5 rounded-full -z-10 blur-3xl opacity-50"></div>
+            <div className="absolute right-[-10%] top-[-10%] w-[500px] h-[500px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
+            <div className="absolute left-[-10%] bottom-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full -z-10 blur-3xl opacity-50"></div>
 
             {/* Logo */}
             <div className="mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
                 <div className="text-primary font-bold text-4xl tracking-tight mb-2">Eksporin</div>
-                <p className="text-gray-500 font-medium">Gerbang Digital Pertanian Modern</p>
+                <p className="text-gray-500 font-medium tracking-tight">Gerbang Digital Pertanian Modern</p>
             </div>
 
             {/* Login Card */}
             <div className="bg-white w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-primary/5 p-8 md:p-10 border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
                 <div className="mb-8 text-center">
                     <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Masuk</h1>
-                    <p className="text-gray-500 text-sm">Silakan masuk untuk mengelola hasil panen Anda.</p>
+                    <p className="text-gray-500 text-sm font-medium">Silakan masuk untuk mengelola hasil panen Anda.</p>
                 </div>
 
-                <form className="space-y-5">
+                <form className="space-y-5" onSubmit={handleLogin}>
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Email atau No. Handphone</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                                <User size={18} />
+                                <Mail size={18} />
                             </div>
                             <input
-                                type="text"
-                                placeholder="Contoh: 08123456789"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
+                                type="email"
+                                placeholder="nama@email.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                required
+                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                            <label className="text-sm font-bold text-gray-700">Kata Sandi</label>
-                            <Link href="#" className="text-xs font-bold text-primary hover:text-primary-dark transition-colors">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kata Sandi</label>
+                            <Link href="#" className="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest">
                                 Lupa Kata Sandi?
                             </Link>
                         </div>
@@ -71,7 +84,10 @@ export default function LoginPage() {
                             <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-12 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required
+                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
                             />
                             <button
                                 type="button"
@@ -83,8 +99,11 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    <button className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2">
-                        Masuk
+                    <button
+                        type="submit"
+                        className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2"
+                    >
+                        Masuk Ke Akun
                     </button>
                 </form>
 
@@ -92,17 +111,17 @@ export default function LoginPage() {
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-100"></div>
                     </div>
-                    <div className="relative flex justify-center text-xs font-bold uppercase tracking-widest text-gray-400">
+                    <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         <span className="bg-white px-4">Atau Masuk Dengan</span>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-300 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
+                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-100 hover:border-gray-200 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
                         <GoogleIcon />
                         Google
                     </button>
-                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-300 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
+                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-100 hover:border-gray-200 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
                         <WhatsAppIcon />
                         WhatsApp
                     </button>
@@ -110,7 +129,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-8 text-center text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                <p className="text-gray-500">
+                <p className="text-gray-500 font-medium">
                     Belum punya akun?{" "}
                     <Link href="/register" className="text-primary font-bold hover:underline hover:text-primary-dark underline-offset-4">
                         Daftar Sekarang
