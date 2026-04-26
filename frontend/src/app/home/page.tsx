@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
     Search,
     MapPin,
@@ -41,18 +42,20 @@ const LinkedinIcon = ({ size = 18 }: { size?: number }) => (
 const Navbar = () => (
     <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
         <div className="flex items-center gap-8">
-            <div className="text-primary font-bold text-2xl tracking-tight">Eksporin</div>
+            <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <a href="#" className="text-primary border-b-2 border-primary pb-1">Home</a>
-                <a href="#" className="hover:text-primary pb-1 transition-colors">Explore</a>
-                <a href="#" className="hover:text-primary pb-1 transition-colors">About</a>
-                <a href="#" className="hover:text-primary pb-1 transition-colors">Help</a>
+                <Link href="/home" className="text-primary border-b-2 border-primary pb-1">Home</Link>
+                <Link href="/explore" className="hover:text-primary pb-1 transition-colors">Explore</Link>
+                <Link href="#" className="hover:text-primary pb-1 transition-colors">About</Link>
+                <Link href="#" className="hover:text-primary pb-1 transition-colors">Help</Link>
             </div>
         </div>
         <div className="flex items-center gap-4">
-            <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors">
-                Daftar
-            </button>
+            <Link href="/register">
+                <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                    Daftar
+                </button>
+            </Link>
             <div className="flex items-center gap-3">
                 <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
                     <Bell size={20} className="text-gray-600" />
