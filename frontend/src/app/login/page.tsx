@@ -20,17 +20,39 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
+import { authService } from "@/services/auth";
+import { useRouter } from "next/navigation";
+
 export default function LoginPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Logging in with:", formData);
-        // Add login logic here
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await authService.login(formData);
+            
+            // Simpan token ke localStorage
+            if (response.token) {
+                localStorage.setItem("token", response.token);
+            }
+            
+            // Redirect ke dashboard/home
+            router.push("/home");
+        } catch (err: any) {
+            setError(err.message || "Gagal masuk. Silakan periksa kembali email dan kata sandi Anda.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -53,6 +75,12 @@ export default function LoginPage() {
                 </div>
 
                 <form className="space-y-5" onSubmit={handleLogin}>
+                    {error && (
+                        <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold p-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
                         <div className="relative group">
@@ -65,7 +93,8 @@ export default function LoginPage() {
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                disabled={isLoading}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                             />
                         </div>
                     </div>
@@ -87,7 +116,8 @@ export default function LoginPage() {
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 required
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                disabled={isLoading}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                             />
                             <button
                                 type="button"
@@ -101,9 +131,17 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2"
+                        disabled={isLoading}
+                        className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                        Masuk Ke Akun
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <span>Sedang Masuk...</span>
+                            </div>
+                        ) : (
+                            "Masuk Ke Akun"
+                        )}
                     </button>
                 </form>
 
