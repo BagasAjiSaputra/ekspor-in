@@ -4,9 +4,15 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Truck, ShieldCheck, Leaf, Headphones, Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
 
+import { authService } from "@/services/auth";
+import { useRouter } from "next/navigation";
+
 export default function RegisterPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -15,10 +21,35 @@ export default function RegisterPage() {
         confirmPassword: ""
     });
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Registering with:", formData);
-        // Add register logic here
+        
+        if (formData.password !== formData.confirmPassword) {
+            setError("Kata sandi dan konfirmasi kata sandi tidak cocok.");
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            // Kita gunakan register dari authService
+            // Catatan: Payload di Postman hanya email & password, 
+            // tapi UI punya name & phone. Sesuaikan jika perlu.
+            await authService.register({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password
+            });
+            
+            // Berhasil daftar, arahkan ke login
+            router.push("/login?registered=true");
+        } catch (err: any) {
+            setError(err.message || "Gagal mendaftar. Silakan coba lagi nanti.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -47,6 +78,11 @@ export default function RegisterPage() {
                 </div>
 
                 <form className="space-y-6" onSubmit={handleRegister}>
+                    {error && (
+                        <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold p-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                            {error}
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
@@ -60,7 +96,8 @@ export default function RegisterPage() {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                    disabled={isLoading}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                                 />
                             </div>
                         </div>
@@ -76,7 +113,8 @@ export default function RegisterPage() {
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                    disabled={isLoading}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                                 />
                             </div>
                         </div>
@@ -94,7 +132,8 @@ export default function RegisterPage() {
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 required
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                disabled={isLoading}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                             />
                         </div>
                     </div>
@@ -112,7 +151,8 @@ export default function RegisterPage() {
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                    disabled={isLoading}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                                 />
                                 <button
                                     type="button"
@@ -135,7 +175,8 @@ export default function RegisterPage() {
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                    disabled={isLoading}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
                                 />
                                 <button
                                     type="button"
@@ -150,9 +191,17 @@ export default function RegisterPage() {
 
                     <button
                         type="submit"
-                        className="w-full bg-[#113114] hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0 mt-4 h-14"
+                        disabled={isLoading}
+                        className="w-full bg-[#113114] hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0 mt-4 h-14 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                        Buat Akun Sekarang
+                        {isLoading ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <span>Memproses...</span>
+                            </div>
+                        ) : (
+                            "Buat Akun Sekarang"
+                        )}
                     </button>
                 </form>
 
