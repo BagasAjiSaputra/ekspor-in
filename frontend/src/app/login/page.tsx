@@ -63,7 +63,7 @@ export default function LoginPage() {
 
             {/* Logo */}
             <div className="mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="text-primary font-bold text-4xl tracking-tight mb-2">Eksporin</div>
+                <Link href="/home" className="text-primary font-bold text-4xl tracking-tight mb-2 block">Eksporin</Link>
                 <p className="text-gray-500 font-medium tracking-tight">Gerbang Digital Pertanian Modern</p>
             </div>
 

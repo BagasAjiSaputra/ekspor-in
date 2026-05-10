@@ -59,7 +59,7 @@ export default function RegisterPage() {
 
             {/* Logo & Intro */}
             <div className="mb-10 text-center max-w-lg animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="text-primary-dark font-bold text-4xl tracking-tight mb-4">Eksporin</div>
+                <Link href="/home" className="text-primary-dark font-bold text-4xl tracking-tight mb-4 block">Eksporin</Link>
                 <p className="text-gray-600 font-medium leading-relaxed tracking-tight">
                     Membangun Masa Depan Pertanian Modern yang Terhubung dan Terpercaya.
                 </p>
