@@ -22,10 +22,10 @@ export default function ProfilePage() {
     const [sidebarActive, setSidebarActive] = useState("Profil");
 
     const menuItems = [
-        { name: "Beranda", icon: <Home size={20} />, active: false },
-        { name: "Profil", icon: <User size={20} />, active: true },
-        { name: "Buat Postingan", icon: <PlusSquare size={20} />, active: false },
-        { name: "Edit Aktif", icon: <Edit3 size={20} />, active: false },
+        { name: "Beranda", icon: <Home size={20} />, active: false, href: "/home" },
+        { name: "Profil", icon: <User size={20} />, active: true, href: "/profile" },
+        { name: "Buat Postingan", icon: <PlusSquare size={20} />, active: false, href: "/create-post" },
+        { name: "Edit Aktif", icon: <Edit3 size={20} />, active: false, href: "/active-posts" },
     ];
 
     const bottomMenuItems = [
@@ -44,8 +44,9 @@ export default function ProfilePage() {
 
                 <nav className="flex-1 space-y-2">
                     {menuItems.map((item) => (
-                        <button
+                        <Link
                             key={item.name}
+                            href={item.href}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${item.name === sidebarActive
                                     ? "bg-bg-soft text-primary shadow-sm"
                                     : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
@@ -56,7 +57,7 @@ export default function ProfilePage() {
                                 {item.icon}
                             </span>
                             {item.name}
-                        </button>
+                        </Link>
                     ))}
                 </nav>
 
