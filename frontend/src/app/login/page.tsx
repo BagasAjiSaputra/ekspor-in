@@ -33,6 +33,15 @@ export default function LoginPage() {
         password: ""
     });
 
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetStep, setResetStep] = useState(1);
+    const [resetEmail, setResetEmail] = useState("");
+    const [resetToken, setResetToken] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetMessage, setResetMessage] = useState({ type: '', text: '' });
+    const [failedAttempts, setFailedAttempts] = useState(0);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -46,17 +55,132 @@ export default function LoginPage() {
                 localStorage.setItem("token", response.token);
             }
             
-            // Redirect ke dashboard/home
-            router.push("/home");
+            // Redirect ke dashboard/profile
+            router.push("/profile");
         } catch (err: any) {
+            setFailedAttempts((prev) => prev + 1);
             setError(err.message || "Gagal masuk. Silakan periksa kembali email dan kata sandi Anda.");
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleRequestToken = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setResetLoading(true);
+        setResetMessage({ type: '', text: '' });
+        try {
+            await authService.requestPasswordReset({ email: resetEmail });
+            setResetMessage({ type: 'success', text: 'Token berhasil dikirim ke email Anda!' });
+            setResetStep(2);
+        } catch (err: any) {
+            setResetMessage({ type: 'error', text: err.message || 'Gagal mengirim token.' });
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setResetLoading(true);
+        setResetMessage({ type: '', text: '' });
+        try {
+            await authService.resetPassword({ token: resetToken, new_password: newPassword });
+            setResetMessage({ type: 'success', text: 'Kata sandi berhasil diubah! Silakan masuk.' });
+            setTimeout(() => {
+                setShowResetModal(false);
+                setResetStep(1);
+                setResetMessage({ type: '', text: '' });
+                setResetToken("");
+                setNewPassword("");
+            }, 2000);
+        } catch (err: any) {
+            setResetMessage({ type: 'error', text: err.message || 'Gagal mengubah kata sandi.' });
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center p-6 relative overflow-hidden font-body">
+            {/* Reset Password Modal */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                    <div className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl border border-gray-100 relative animate-in fade-in zoom-in-95 duration-200">
+                        <button 
+                            onClick={() => { setShowResetModal(false); setResetStep(1); setResetMessage({type:'', text:''}); }}
+                            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                        <h3 className="text-xl font-extrabold text-gray-900 mb-2">
+                            {resetStep === 1 ? 'Lupa Kata Sandi' : 'Buat Kata Sandi Baru'}
+                        </h3>
+                        <p className="text-gray-500 text-sm font-medium mb-6">
+                            {resetStep === 1 
+                                ? 'Masukkan email Anda untuk mendapatkan token reset password.' 
+                                : 'Masukkan token yang telah dikirim dan kata sandi baru Anda.'}
+                        </p>
+
+                        {resetMessage.text && (
+                            <div className={`p-4 mb-6 rounded-2xl text-sm font-bold border ${resetMessage.type === 'success' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                {resetMessage.text}
+                            </div>
+                        )}
+
+                        {resetStep === 1 ? (
+                            <form onSubmit={handleRequestToken} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={resetEmail}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                        disabled={resetLoading}
+                                        placeholder="nama@email.com"
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                    />
+                                </div>
+                                <button type="submit" disabled={resetLoading} className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 mt-2">
+                                    {resetLoading ? "Mengirim..." : "Kirim Token"}
+                                </button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleResetPassword} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Token Reset</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={resetToken}
+                                        onChange={(e) => setResetToken(e.target.value)}
+                                        disabled={resetLoading}
+                                        placeholder="Misal: fda95189-..."
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kata Sandi Baru</label>
+                                    <input
+                                        type="password"
+                                        required
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        disabled={resetLoading}
+                                        placeholder="••••••••"
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                    />
+                                </div>
+                                <button type="submit" disabled={resetLoading} className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 mt-2">
+                                    {resetLoading ? "Menyimpan..." : "Reset Password"}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Background Decoration */}
             <div className="absolute right-[-10%] top-[-10%] w-[500px] h-[500px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
             <div className="absolute left-[-10%] bottom-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full -z-10 blur-3xl opacity-50"></div>
@@ -102,9 +226,11 @@ export default function LoginPage() {
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kata Sandi</label>
-                            <Link href="#" className="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest">
-                                Lupa Kata Sandi?
-                            </Link>
+                            {failedAttempts >= 3 && (
+                                <button type="button" onClick={() => setShowResetModal(true)} className="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest animate-in fade-in zoom-in-95 duration-300">
+                                    Lupa Kata Sandi?
+                                </button>
+                            )}
                         </div>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
@@ -145,44 +271,17 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-100"></div>
-                    </div>
-                    <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                        <span className="bg-white px-4">Atau Masuk Dengan</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-100 hover:border-gray-200 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
-                        <GoogleIcon />
-                        Google
-                    </button>
-                    <button className="flex items-center justify-center gap-2 bg-white border border-gray-100 hover:border-gray-200 py-3 rounded-2xl text-sm font-bold text-gray-600 transition-all hover:bg-gray-50">
-                        <WhatsAppIcon />
-                        WhatsApp
-                    </button>
+                <div className="mt-8 pt-6 border-t border-gray-100 text-center text-sm font-medium">
+                    <p className="text-gray-500 font-medium">
+                        Belum punya akun?{" "}
+                        <Link href="/register" className="text-primary font-bold hover:underline hover:text-primary-dark underline-offset-4">
+                            Daftar Sekarang
+                        </Link>
+                    </p>
                 </div>
             </div>
 
-            <div className="mt-8 text-center text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                <p className="text-gray-500 font-medium">
-                    Belum punya akun?{" "}
-                    <Link href="/register" className="text-primary font-bold hover:underline hover:text-primary-dark underline-offset-4">
-                        Daftar Sekarang
-                    </Link>
-                </p>
-            </div>
 
-            {/* Footer Text */}
-            <div className="mt-12 opacity-30 select-none">
-                <div className="flex items-center gap-4 text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase">
-                    <div className="h-[1px] w-12 bg-gray-300"></div>
-                    Sustainable Farming Hub
-                    <div className="h-[1px] w-12 bg-gray-300"></div>
-                </div>
-            </div>
         </div>
     );
 }

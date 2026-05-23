@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api-proxy";
 
 async function fetcher(endpoint: string, options: RequestInit = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -14,10 +14,16 @@ async function fetcher(endpoint: string, options: RequestInit = {}) {
     headers,
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    // Jika response bukan JSON (misal: error 500 dari Next.js proxy "Internal Server Error")
+    data = { message: await response.text() || "Terjadi kesalahan pada server" };
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
+    throw new Error(data.message || data.error || "Something went wrong");
   }
 
   return data;
