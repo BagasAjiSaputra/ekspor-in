@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api-proxy/:path*',
+        destination: 'http://43.157.248.229:8080/:path*',
+      },
+    ]
+  },
+  allowedDevOrigins: ['192.168.100.195', 'localhost'],
 };
 
 export default nextConfig;

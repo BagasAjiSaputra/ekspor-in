@@ -17,9 +17,75 @@ import {
     Save,
     X
 } from "lucide-react";
+import { authService } from "@/services/auth";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
+    const router = useRouter();
     const [sidebarActive, setSidebarActive] = useState("Profil");
+    const [profileData, setProfileData] = useState<any>(null);
+    const [formData, setFormData] = useState({ name: '', email: '', address: '' });
+    const [isLoading, setIsLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateMessage, setUpdateMessage] = useState({ type: '', text: '' });
+    const [error, setError] = useState<string | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+        } catch (err) {
+            console.error("Server logout failed", err);
+        } finally {
+            localStorage.removeItem("token");
+            router.push("/login");
+        }
+    };
+
+    React.useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const data = await authService.getProfile();
+                // Assuming the API returns the user object directly, or in a specific key.
+                // We'll set the whole response for now.
+                const user = data.user || data;
+                setProfileData(user);
+                setFormData({ 
+                    name: user.name || '', 
+                    email: user.email || '',
+                    address: user.address || ''
+                });
+            } catch (err: any) {
+                setError(err.message || "Gagal memuat profil");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleUpdateProfile = async () => {
+        setIsUpdating(true);
+        setUpdateMessage({ type: '', text: '' });
+        try {
+            await authService.updateProfile({
+                name: formData.name,
+                email: formData.email,
+                address: formData.address,
+                // you can add password here if required by the backend
+            });
+            setUpdateMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
+            setProfileData((prev: any) => ({ ...prev, name: formData.name, email: formData.email, address: formData.address }));
+            setTimeout(() => {
+                setShowEditModal(false);
+                setUpdateMessage({ type: '', text: '' });
+            }, 1500);
+        } catch (err: any) {
+            setUpdateMessage({ type: 'error', text: err.message || 'Gagal memperbarui profil.' });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const menuItems = [
         { name: "Beranda", icon: <Home size={20} />, active: false, href: "/home" },
@@ -35,6 +101,77 @@ export default function ProfilePage() {
 
     return (
         <div className="min-h-screen bg-[#FDFDFD] flex font-body">
+            {/* Edit Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+                    <div className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl border border-gray-100 relative animate-in fade-in zoom-in-95 duration-200">
+                        <button 
+                            onClick={() => setShowEditModal(false)}
+                            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-xl font-extrabold text-gray-900 mb-6">Edit Profil</h3>
+                        
+                        {updateMessage.text && (
+                            <div className={`p-4 mb-6 rounded-2xl text-sm font-bold border ${updateMessage.type === 'success' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                {updateMessage.text}
+                            </div>
+                        )}
+
+                        <div className="space-y-4 mb-8">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Perusahaan</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    disabled={isUpdating}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Bisnis</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    disabled={isUpdating}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Gudang Utama</label>
+                                <textarea
+                                    rows={3}
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    disabled={isUpdating}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body disabled:opacity-50"
+                                ></textarea>
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => setShowEditModal(false)}
+                                disabled={isUpdating}
+                                className="flex-1 py-4 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button 
+                                onClick={handleUpdateProfile}
+                                disabled={isUpdating}
+                                className="flex-1 bg-[#113114] hover:bg-black text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
+                            >
+                                {isUpdating ? "Menyimpan..." : "Simpan"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Sidebar */}
             <aside className="w-64 bg-white border-r border-gray-100 flex flex-col p-6 sticky top-0 h-screen">
                 <div className="mb-10 px-2">
@@ -65,6 +202,7 @@ export default function ProfilePage() {
                     {bottomMenuItems.map((item) => (
                         <button
                             key={item.name}
+                            onClick={item.name === "Keluar" ? handleLogout : undefined}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all"
                         >
                             <span className="text-gray-400">{item.icon}</span>
@@ -106,7 +244,9 @@ export default function ProfilePage() {
                                 <span className="text-[10px] font-bold uppercase tracking-wider">Terverifikasi</span>
                             </div>
 
-                            <h3 className="text-xl font-extrabold text-gray-900 text-center">Agro Jaya Mandiri</h3>
+                            <h3 className="text-xl font-extrabold text-gray-900 text-center">
+                                {isLoading ? "Memuat..." : profileData?.name || "Nama Tidak Tersedia"}
+                            </h3>
                             <p className="text-gray-400 text-sm mt-1">Bergabung sejak Maret 2023</p>
                         </div>
 
@@ -139,8 +279,9 @@ export default function ProfilePage() {
                                     <input
                                         type="text"
                                         placeholder="Agro Jaya Mandiri"
-                                        defaultValue="Agro Jaya Mandiri"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                        value={profileData?.name || ""}
+                                        readOnly
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body cursor-default"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -158,9 +299,10 @@ export default function ProfilePage() {
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Gudang Utama</label>
                                 <textarea
                                     rows={4}
-                                    defaultValue="Jl. Raya Pertanian No. 42, Pangalengan, Kabupaten Bandung, Jawa Barat 40378"
+                                    value={profileData?.address || ""}
+                                    readOnly
                                     placeholder="Jl. Raya Pertanian No. 42, Pangalengan, Kabupaten Bandung, Jawa Barat 40378"
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body"
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body cursor-default"
                                 ></textarea>
                             </div>
                         </section>
@@ -172,7 +314,7 @@ export default function ProfilePage() {
                                 <div className="h-[1px] flex-1 bg-gray-100 ml-2"></div>
                             </h3>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-2 gap-6 items-end">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Bisnis</label>
                                     <div className="relative group">
@@ -181,40 +323,24 @@ export default function ProfilePage() {
                                         </div>
                                         <input
                                             type="email"
-                                            defaultValue="contact@agrojaya.com"
+                                            value={profileData?.email || ""}
+                                            readOnly
                                             placeholder="contact@agrojaya.com"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body cursor-default"
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nomor WhatsApp</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                                            <Phone size={18} />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            defaultValue="0812 3456 7890"
-                                            placeholder="0812 3456 7890"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body"
-                                        />
-                                    </div>
+                                <div className="flex items-center justify-end gap-6 mb-1">
+                                    <button 
+                                        onClick={() => setShowEditModal(true)}
+                                        className="bg-[#113114] hover:bg-black text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        <Edit3 size={18} />
+                                        Update Profil
+                                    </button>
                                 </div>
                             </div>
                         </section>
-
-                        {/* Form Actions */}
-                        <div className="flex items-center justify-end gap-6 mt-12">
-                            <button className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-2">
-                                <X size={18} />
-                                Batalkan
-                            </button>
-                            <button className="bg-[#113114] hover:bg-black text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                <Save size={18} />
-                                Simpan Perubahan
-                            </button>
-                        </div>
                     </div>
                 </div>
             </main>
