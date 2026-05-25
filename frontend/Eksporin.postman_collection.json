@@ -137,16 +137,74 @@
 				{
 					"name": "Reset Token",
 					"request": {
-						"method": "GET",
-						"header": []
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\n//     \"email\" : \"bagasaji932@gmail.com\"\n// }\n\n{\n    \"email\" : \"rizalsyarifudin480@gmail.com\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/token-reset",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"token-reset"
+							]
+						}
 					},
 					"response": []
 				},
 				{
 					"name": "Reset Password",
 					"request": {
-						"method": "GET",
-						"header": []
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\" : \"fda95189-5828-423e-905f-e5d54e5911ce\", // Ntar FE ambil Token Dari Params\n    \"new_password\": \"asdfasdf\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/reset-password",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\" : \"Bagasht\",\n    \"email\": \"bagas199s8gmail.com\",\n    \"password\" : \"asdfasdf\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/logout",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"logout"
+							]
+						}
 					},
 					"response": []
 				}
@@ -444,19 +502,6 @@
 				},
 				{
 					"name": "Get Listing By ID",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Next JS Testing",
-			"item": [
-				{
-					"name": "Get All Listing",
 					"request": {
 						"method": "GET",
 						"header": []

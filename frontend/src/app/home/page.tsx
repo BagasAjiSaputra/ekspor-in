@@ -39,24 +39,37 @@ const LinkedinIcon = ({ size = 18 }: { size?: number }) => (
     </svg>
 );
 
-const Navbar = () => (
-    <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
-        <div className="flex items-center gap-8">
-            <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                <Link href="/home" className="text-primary border-b-2 border-primary pb-1">Home</Link>
-                <Link href="/explore" className="hover:text-primary pb-1 transition-colors">Explore</Link>
-                <Link href="#" className="hover:text-primary pb-1 transition-colors">About</Link>
-                <Link href="#" className="hover:text-primary pb-1 transition-colors">Help</Link>
+const Navbar = () => {
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+    React.useEffect(() => {
+        // Check if token exists in localStorage
+        const token = localStorage.getItem("token");
+        if (token) {
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+    return (
+        <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
+            <div className="flex items-center gap-8">
+                <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
+                <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
+                    <Link href="/home" className="text-primary border-b-2 border-primary pb-1">Home</Link>
+                    <Link href="/explore" className="hover:text-primary pb-1 transition-colors">Explore</Link>
+                    <Link href="#" className="hover:text-primary pb-1 transition-colors">About</Link>
+                    <Link href="#" className="hover:text-primary pb-1 transition-colors">Help</Link>
+                </div>
             </div>
-        </div>
-        <div className="flex items-center gap-4">
-            <Link href="/register">
-                <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-                    Daftar
-                </button>
-            </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+                {!isLoggedIn && (
+                    <Link href="/register">
+                        <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                            Daftar
+                        </button>
+                    </Link>
+                )}
+                <div className="flex items-center gap-3">
                 <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
                     <Bell size={20} className="text-gray-600" />
                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -66,8 +79,9 @@ const Navbar = () => (
                 </Link>
             </div>
         </div>
-    </nav>
-);
+        </nav>
+    );
+};
 
 const SearchBox = () => (
     <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/50 w-full max-w-2xl mt-8">
@@ -136,10 +150,9 @@ const RequestCard = ({ title, company, location, volume, price, type, bgColor }:
                 <button className="py-2.5 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">
                     Detail
                 </button>
-                <button className="py-2.5 rounded-xl bg-primary-dark hover:bg-black text-white font-bold text-sm flex items-center justify-center gap-1.5 transition-colors">
-                    <MessageSquare size={16} />
-                    WhatsApp
-                </button>
+                <div className="py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors">
+                    0812-3456-7890
+                </div>
             </div>
         </div>
         <div className="h-24 bg-card-bg mt-2 px-4 py-3 flex flex-col justify-end items-end relative overflow-hidden">
@@ -209,9 +222,12 @@ const Footer = () => (
 );
 
 export default function HomePage() {
+
     return (
         <div className="min-h-screen bg-white font-body">
             <Navbar />
+
+
 
             <main className="max-w-7xl mx-auto px-6">
                 {/* Hero Section */}

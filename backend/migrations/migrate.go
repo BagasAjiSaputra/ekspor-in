@@ -9,13 +9,14 @@ import (
 func Migration() {
 	err := config.DB.AutoMigrate(
 		&models.User{},
+		&models.Company{},
+		&models.Commodity{},
+		&models.Listing{},
 	)
 
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
-	
 
 	fmt.Println("Migrate DB Sukses")
 }
