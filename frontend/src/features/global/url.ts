@@ -1,0 +1,1 @@
+export const BASE_URL = process.env.BASE_URL || "http://43.157.248.229:8080";

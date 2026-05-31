@@ -20,7 +20,9 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
-import { authService } from "@/services/auth";
+import { login } from "@/features/auth/login";
+import { resetToken as resetTokenAction } from "@/features/auth/reset_token";
+import { authService } from "@/services/auth"; // keep for reset password for now
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -28,7 +30,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [formData, setFormData] = useState({
+    const [formDataState, setFormDataState] = useState({
         email: "",
         password: ""
     });
@@ -42,21 +44,16 @@ export default function LoginPage() {
     const [resetMessage, setResetMessage] = useState({ type: '', text: '' });
     const [failedAttempts, setFailedAttempts] = useState(0);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const clientLogin = async (formData: FormData) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await authService.login(formData);
-            
-            // Simpan token ke localStorage
-            if (response.token) {
-                localStorage.setItem("token", response.token);
+            const res = await login(formData);
+            if (res?.error) {
+                setFailedAttempts((prev) => prev + 1);
+                setError(res.error);
             }
-            
-            // Redirect ke dashboard/profile
-            router.push("/profile");
         } catch (err: any) {
             setFailedAttempts((prev) => prev + 1);
             setError(err.message || "Gagal masuk. Silakan periksa kembali email dan kata sandi Anda.");
@@ -70,11 +67,23 @@ export default function LoginPage() {
         setResetLoading(true);
         setResetMessage({ type: '', text: '' });
         try {
-            await authService.requestPasswordReset({ email: resetEmail });
+            const fd = new FormData();
+            fd.append("email", resetEmail);
+            
+            const res = await resetTokenAction(fd);
+            if (res && res.error) {
+                throw new Error(res.error);
+            }
+            // Ignore NEXT_REDIRECT if it happens, or just continue
+            
             setResetMessage({ type: 'success', text: 'Token berhasil dikirim ke email Anda!' });
             setResetStep(2);
         } catch (err: any) {
-            setResetMessage({ type: 'error', text: err.message || 'Gagal mengirim token.' });
+            if (err.message === "NEXT_REDIRECT") {
+                // Typically redirects to /register or similar, ignore if we want to stay
+            } else {
+                setResetMessage({ type: 'error', text: err.message || 'Gagal mengirim token.' });
+            }
         } finally {
             setResetLoading(false);
         }
@@ -198,7 +207,7 @@ export default function LoginPage() {
                     <p className="text-gray-500 text-sm font-medium">Silakan masuk untuk mengelola hasil panen Anda.</p>
                 </div>
 
-                <form className="space-y-5" onSubmit={handleLogin}>
+                <form className="space-y-5" action={clientLogin}>
                     {error && (
                         <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold p-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
                             {error}
@@ -212,10 +221,11 @@ export default function LoginPage() {
                                 <Mail size={18} />
                             </div>
                             <input
+                                name="email"
                                 type="email"
                                 placeholder="nama@email.com"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                value={formDataState.email}
+                                onChange={(e) => setFormDataState({ ...formDataState, email: e.target.value })}
                                 required
                                 disabled={isLoading}
                                 className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
@@ -237,10 +247,11 @@ export default function LoginPage() {
                                 <Lock size={18} />
                             </div>
                             <input
+                                name="password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                value={formDataState.password}
+                                onChange={(e) => setFormDataState({ ...formDataState, password: e.target.value })}
                                 required
                                 disabled={isLoading}
                                 className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"

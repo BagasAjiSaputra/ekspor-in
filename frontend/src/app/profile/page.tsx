@@ -15,9 +15,14 @@ import {
     Mail,
     Phone,
     Save,
-    X
+    X,
+    Building2
 } from "lucide-react";
 import { authService } from "@/services/auth";
+import { GetProfile } from "@/features/auth/get_profile";
+import { UpdateProfile } from "@/features/auth/update_profile";
+import { VerifyRole } from "@/features/auth/role_verified";
+import { Logout } from "@/features/auth/logout";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -30,22 +35,24 @@ export default function ProfilePage() {
     const [updateMessage, setUpdateMessage] = useState({ type: '', text: '' });
     const [error, setError] = useState<string | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
 
     const handleLogout = async () => {
         try {
-            await authService.logout();
-        } catch (err) {
-            console.error("Server logout failed", err);
+            await Logout();
+        } catch (err: any) {
+            if (err.message === "NEXT_REDIRECT") {
+                // Ignore
+            }
         } finally {
-            localStorage.removeItem("token");
-            router.push("/login");
+            router.push("/home");
         }
     };
 
     React.useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const data = await authService.getProfile();
+                const data = await GetProfile();
                 // Assuming the API returns the user object directly, or in a specific key.
                 // We'll set the whole response for now.
                 const user = data.user || data;
@@ -68,12 +75,16 @@ export default function ProfilePage() {
         setIsUpdating(true);
         setUpdateMessage({ type: '', text: '' });
         try {
-            await authService.updateProfile({
-                name: formData.name,
-                email: formData.email,
-                address: formData.address,
-                // you can add password here if required by the backend
-            });
+            const fd = new FormData();
+            fd.append("name", formData.name);
+            fd.append("email", formData.email);
+            // fd.append("address", formData.address); // Add if supported by feature
+            
+            const res = await UpdateProfile(fd);
+            if (res && res.error) {
+                throw new Error(res.error);
+            }
+            
             setUpdateMessage({ type: 'success', text: 'Profil berhasil diperbarui!' });
             setProfileData((prev: any) => ({ ...prev, name: formData.name, email: formData.email, address: formData.address }));
             setTimeout(() => {
@@ -84,6 +95,23 @@ export default function ProfilePage() {
             setUpdateMessage({ type: 'error', text: err.message || 'Gagal memperbarui profil.' });
         } finally {
             setIsUpdating(false);
+        }
+    };
+
+    const handleApplyVerification = async () => {
+        setIsApplying(true);
+        try {
+            const res = await VerifyRole();
+            if (res && res.error) {
+                alert(res.error);
+            } else {
+                alert("Pengajuan verifikasi berhasil dikirim! Silakan tunggu persetujuan Superadmin.");
+                setProfileData((prev: any) => ({ ...prev, is_verified: "pending" }));
+            }
+        } catch (err: any) {
+            alert("Gagal mengajukan verifikasi: " + err.message);
+        } finally {
+            setIsApplying(false);
         }
     };
 
@@ -239,10 +267,20 @@ export default function ProfilePage() {
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-1.5 bg-green-100 text-[#237127] px-3 py-1 rounded-full mb-4">
-                                <CheckCircle size={14} fill="currentColor" className="text-white" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Terverifikasi</span>
-                            </div>
+                            {profileData?.is_verified === "verified" ? (
+                                <div className="flex items-center gap-1.5 bg-green-100 text-[#237127] px-3 py-1 rounded-full mb-4">
+                                    <CheckCircle size={14} fill="currentColor" className="text-white" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Terverifikasi</span>
+                                </div>
+                            ) : profileData?.is_verified === "pending" ? (
+                                <div className="flex items-center gap-1.5 bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full mb-4">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Menunggu Persetujuan</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-3 py-1 rounded-full mb-4">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Belum Verifikasi</span>
+                                </div>
+                            )}
 
                             <h3 className="text-xl font-extrabold text-gray-900 text-center">
                                 {isLoading ? "Memuat..." : profileData?.name || "Nama Tidak Tersedia"}
@@ -330,7 +368,14 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-end gap-6 mb-1">
+                                <div className="flex items-center justify-end gap-3 mb-1">
+                                    <Link 
+                                        href="/company/register"
+                                        className="bg-white border-2 border-[#113114] text-[#113114] hover:bg-gray-50 px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        <Building2 size={18} />
+                                        Daftarkan Perusahaan
+                                    </Link>
                                     <button 
                                         onClick={() => setShowEditModal(true)}
                                         className="bg-[#113114] hover:bg-black text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0"

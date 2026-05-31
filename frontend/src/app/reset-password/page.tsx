@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { authService } from "@/services/auth";
+import { resetPassword } from "@/features/auth/reset_password";
 
 function ResetPasswordForm() {
     const router = useRouter();
@@ -45,20 +46,28 @@ function ResetPasswordForm() {
         setMessage({ type: null, text: "" });
 
         try {
-            await authService.resetPassword({
-                token: token,
-                new_password: newPassword
-            });
+            const fd = new FormData();
+            fd.append("token", token);
+            fd.append("new_password", newPassword);
+            
+            const res = await resetPassword(fd);
+            if (res && res.error) {
+                throw new Error(res.error);
+            }
 
             setMessage({ type: "success", text: "Kata sandi berhasil diubah! Mengarahkan ke halaman login..." });
             
-            // Redirect ke halaman login setelah beberapa detik
+            // Redirect is handled by the server action usually, but as fallback:
             setTimeout(() => {
                 router.push("/login");
             }, 2500);
 
         } catch (err: any) {
-            setMessage({ type: "error", text: err.message || "Gagal mengubah kata sandi. Token mungkin sudah kedaluwarsa." });
+            if (err.message === "NEXT_REDIRECT") {
+                // Ignore redirect error
+            } else {
+                setMessage({ type: "error", text: err.message || "Gagal mengubah kata sandi. Token mungkin sudah kedaluwarsa." });
+            }
         } finally {
             setIsLoading(false);
         }
