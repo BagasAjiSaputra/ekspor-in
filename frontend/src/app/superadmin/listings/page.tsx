@@ -1,26 +1,23 @@
 import React from "react";
-import { ClipboardCheck } from "lucide-react";
+import { FileText } from "lucide-react";
+import { GetAllListings } from "@/features/listing/get_all_listings";
+import { ListingTable } from "./components/ListingTable";
 import Link from "next/link";
-import { GetAllUsers } from "@/features/superadmin/get_users";
-import { ApproveTable } from "./components/ApproveTable";
 
-export default async function SuperadminDashboard() {
-  const users = await GetAllUsers();
+export default async function ListingsModerationDashboard() {
+  const res = await GetAllListings();
+  // Handle case where res might be an error or not an array
+  const listings = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
   
-  // Sesuai permintaan, kita tampilkan kembali SEMUA user
-  const aggregatorCandidates = users;
-  const totalUsers = aggregatorCandidates.length;
-
   return (
     <div className="max-w-7xl mx-auto pb-10">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 font-plus-jakarta-sans tracking-tight">
-          Verifikasi Agregator Baru
+          Moderasi Postingan
         </h1>
         <p className="text-gray-500 mt-2 text-[15px] max-w-3xl">
-          Kelola pendaftaran mitra pengepul dan tinjau kelayakan operasional mereka sebelum
-          diizinkan mengakses pasar digital.
+          Tinjau seluruh postingan komoditas yang dipublikasikan oleh para agregator. Pastikan kualitas konten sesuai dengan standar Eksporin.
         </p>
       </div>
 
@@ -28,18 +25,18 @@ export default async function SuperadminDashboard() {
       <div className="bg-[#F6F7F6] rounded-[24px] p-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
-            <ClipboardCheck className="text-green-700 h-6 w-6" />
+            <FileText className="text-green-700 h-6 w-6" />
             <h2 className="text-xl font-bold text-green-800 font-plus-jakarta-sans">
-              Daftar Agregator
+              Daftar Postingan
             </h2>
           </div>
           <span className="bg-green-700 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            {totalUsers} Agregator
+            {listings.length} Postingan
           </span>
         </div>
 
-        {/* Tabel Persetujuan (Client Component) */}
-        <ApproveTable initialUsers={aggregatorCandidates} />
+        {/* Tabel Postingan (Client Component) */}
+        <ListingTable initialListings={listings} />
       </div>
 
       {/* Footer Area */}
@@ -71,13 +68,6 @@ export default async function SuperadminDashboard() {
           </div>
         </div>
       </footer>
-
-      {/* Chat Bubble Icon - Fixed Bottom Right */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <button className="h-14 w-14 rounded-full bg-white text-green-700 shadow-lg border border-gray-100 flex items-center justify-center hover:scale-105 transition-transform hover:shadow-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg>
-        </button>
-      </div>
     </div>
   );
 }
