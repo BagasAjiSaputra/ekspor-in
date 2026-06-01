@@ -18,5 +18,7 @@ func Migration() {
 		fmt.Println(err.Error())
 	}
 
+	
+
 	fmt.Println("Migrate DB Sukses")
 }

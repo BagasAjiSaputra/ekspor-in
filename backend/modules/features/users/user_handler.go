@@ -2,7 +2,7 @@ package users
 
 import (
 	"eksporin/modules/middleware"
-	// "eksporin/modules/utils"
+	"eksporin/modules/utils"
 	"encoding/json"
 	"net/http"
 
@@ -16,14 +16,14 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
 
 	user, err := RegisterUser(req.Name, req.Email, req.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		utils.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -46,21 +46,33 @@ func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
+		return
 	}
 
 	token, err := LoginUser(req.Email, req.Password)
 
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
-	res := LoginResponse{
-		Token: token,
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // https true
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	response := LoginResponse{
+		Message: "Login Berhasil",
+		Token:   token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(response)
 }
 
 func GetProfileHander(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +82,7 @@ func GetProfileHander(w http.ResponseWriter, r *http.Request) {
 	user, err := GetUserByID(userID)
 
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -93,26 +105,26 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	user, err := UpdateUserByID(userID, req.Name, req.Email, req.Password)
 
 	if err != nil {
-		http.Error(w, "Gagal Update User", http.StatusInternalServerError)
+		utils.Error(w, "Gagal Update User", http.StatusInternalServerError)
 		return
 	}
 
 	response := UpdateUserResponse{
-		ID:       user.ID,
+		ID:       userID,
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: user.Password,
@@ -128,21 +140,21 @@ func UpdateRequestVerified(w http.ResponseWriter, r *http.Request) {
 	// err := json.NewDecoder(r.Body).Decode(&req)
 
 	// if err != nil {
-	// 	http.Error(w, "Invalid Request", http.StatusBadRequest)
+	// 	utils.Error(w, "Invalid Request", http.StatusBadRequest)
 	// 	return
 	// }
 
 	userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID)
 
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		utils.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	_, err := RequestVerified(userID)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -160,7 +172,7 @@ func SendTokenResetHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		http.Error(w, "Invalid", http.StatusBadRequest)
+		utils.Error(w, "Invalid", http.StatusBadRequest)
 		return
 	}
 
@@ -184,14 +196,14 @@ func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 
 	if err != nil {
-		http.Error(w, "Invalid Request", http.StatusBadRequest)
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
 		return
 	}
 
 	_, err = UpdatePassword(req.Token, req.NewPassword)
 
 	if err != nil {
-		http.Error(w, "Failed Update Password", http.StatusBadRequest)
+		utils.Error(w, "Failed Update Password", http.StatusBadRequest)
 		return
 	}
 
@@ -199,5 +211,23 @@ func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		Message: "Password Has been updated",
 	}
 
+	json.NewEncoder(w).Encode(response)
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+
+	response := Response{
+		Message: "Logout Berhasil",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
