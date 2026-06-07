@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func RegisterUser(name string, email string, password string)(*models.User, error) {
+func RegisterUser(name string, email string, password string) (*models.User, error) {
 
 	if name == "" || email == "" || password == "" {
 		return nil, errors.New("All Field Required")
@@ -21,11 +21,11 @@ func RegisterUser(name string, email string, password string)(*models.User, erro
 	if err != nil {
 		return nil, err
 	}
-	
+
 	user := &models.User{
-		Name: name,
-		Email : email,
-		Password : hashedPassword,
+		Name:     name,
+		Email:    email,
+		Password: hashedPassword,
 	}
 
 	err = CreateUser(user)
@@ -62,6 +62,7 @@ func GetUserByID(id uuid.UUID) (*models.User, error) {
 }
 
 func UpdateUserByID(id uuid.UUID, name string, email string, password string) (*models.User, error) {
+
 	user, err := FindByID(id)
 
 	if err != nil {
@@ -71,7 +72,6 @@ func UpdateUserByID(id uuid.UUID, name string, email string, password string) (*
 	if name != "" {
 		user.Name = name
 	}
-
 	if email != "" {
 		user.Email = email
 	}
@@ -128,7 +128,7 @@ func RequestResetPassword(email string) (string, error) {
 		return "", nil
 	}
 
-	resetLink := fmt.Sprint("http://localhost:8080/reset-password?token=%s", token)
+	resetLink := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
 
 	subject := "Reset Password"
 	body := fmt.Sprintf(`
@@ -145,10 +145,10 @@ func RequestResetPassword(email string) (string, error) {
 	         <table width="600" cellpadding="0" cellspacing="0" style="background-color:white; margin-top:50px; border-radius:10px; padding:40px; text-align:center;">
 	           <tr>
 	             <td>
-	               <h1 style="color:#7c3aed;">Reset Your Password</h1>
-	               <p style="color:#374151; font-size:16px;">Click the button below to reset your password.</p>
+	               <h1 style="color:#7c3aed;">Reset Password Baru</h1>
+	               <p style="color:#374151; font-size:16px;">Klik Untuk Update Password</p>
 	               <a href="%s" style="display:inline-block; margin-top:20px; padding:15px 30px; background-color:#7c3aed; color:white; text-decoration:none; border-radius:8px; font-weight:bold;">Reset Password</a>
-	               <p style="color:#9ca3af; font-size:12px; margin-top:20px;">If you didn't request this, just ignore this email.</p>
+	               <p style="color:#9ca3af; font-size:12px; margin-top:20px;">Abaikan Jika Anda Tidak Melakukan Reset Password</p>
 	             </td>
 	           </tr>
 	         </table>
@@ -167,18 +167,19 @@ func RequestResetPassword(email string) (string, error) {
 	return resetLink, nil
 }
 
-func UpdatePassword(token string, newPassword string) (*models.User, error){
+func UpdatePassword(token string, newPassword string) (*models.User, error) {
 	user := FindByResetToken(token)
 
 	if user == nil {
 		return nil, errors.New("Invalid Reset Token")
 	}
 
-	if user.ResetExp == nil || user.ResetExp.Before(time.Now()){
+	if user.ResetExp == nil || user.ResetExp.Before(time.Now()) {
 		return nil, errors.New("Token Expired")
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)
+
 	if err != nil {
 		return nil, err
 	}
@@ -188,6 +189,7 @@ func UpdatePassword(token string, newPassword string) (*models.User, error){
 	user.ResetExp = nil
 
 	err = UpdateUser(user)
+
 	if err != nil {
 		return nil, err
 	}

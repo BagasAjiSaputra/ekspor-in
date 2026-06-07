@@ -13,6 +13,9 @@ import {
     List,
     MessageSquare
 } from "lucide-react";
+import { getListings } from "@/features/listing/get_all_listing";
+import { GetProfile } from "@/features/auth/get_profile";
+
 
 // Brand Icons
 const FacebookIcon = ({ size = 18 }: { size?: number }) => (
@@ -43,11 +46,17 @@ const Navbar = () => {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
     React.useEffect(() => {
-        // Check if token exists in localStorage
-        const token = localStorage.getItem("token");
-        if (token) {
-            setIsLoggedIn(true);
-        }
+        const checkAuth = async () => {
+            try {
+                const profile = await GetProfile();
+                if (profile && !profile.error && profile.id) {
+                    setIsLoggedIn(true);
+                }
+            } catch (err) {
+                // Not logged in
+            }
+        };
+        checkAuth();
     }, []);
 
     return (
@@ -69,15 +78,17 @@ const Navbar = () => {
                         </button>
                     </Link>
                 )}
-                <div className="flex items-center gap-3">
-                <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
-                    <Bell size={20} className="text-gray-600" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </div>
-                <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200">
-                    <User size={20} className="text-gray-600" />
-                </Link>
-            </div>
+                {isLoggedIn && (
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
+                            <Bell size={20} className="text-gray-600" />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200">
+                            <User size={20} className="text-gray-600" />
+                        </Link>
+                    </div>
+                )}
         </div>
         </nav>
     );
@@ -117,19 +128,23 @@ const SearchBox = () => (
     </div>
 );
 
-const RequestCard = ({ title, company, location, volume, price, type, bgColor }: any) => (
+const RequestCard = ({ title, company, location, volume, price, type, bgColor, imageUrl }: any) => (
     <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
         <div className="relative h-48 bg-gray-200">
-            {/* Placeholder for commodity image */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${bgColor} opacity-60 group-hover:scale-105 transition-transform duration-500`}></div>
-            <div className="absolute top-4 left-4">
-                <span className="bg-secondary text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tight">
+            {/* Image Display */}
+            {imageUrl ? (
+                <img src={imageUrl} alt={title || company} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${bgColor} opacity-60 group-hover:scale-105 transition-transform duration-500`}></div>
+            )}
+            <div className="absolute top-4 left-4 z-10">
+                <span className="bg-secondary text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-tight shadow-sm">
                     {type}
                 </span>
             </div>
         </div>
         <div className="p-5">
-            <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors">{company}</h3>
+            <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors">{title || company}</h3>
             <div className="flex items-center gap-1 mt-1 text-gray-500">
                 <MapPin size={14} />
                 <span className="text-xs font-medium">{location}</span>
@@ -222,6 +237,23 @@ const Footer = () => (
 );
 
 export default function HomePage() {
+    const [listings, setListings] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchListings = async () => {
+            try {
+                const response = await getListings();
+                // Assumes response is an array or has a data property that is an array
+                setListings(Array.isArray(response) ? response : (response as any)?.data || []);
+            } catch (error) {
+                console.error("Failed to fetch listings:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchListings();
+    }, []);
 
     return (
         <div className="min-h-screen bg-white font-body">
@@ -268,31 +300,41 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <RequestCard
-                            company="Koperasi Tani Makmur"
-                            location="Pangalengan, Jawa Barat"
-                            volume="500 Kg"
-                            price="Rp 85.000"
-                            type="Kopi Arabika"
-                            bgColor="from-[#4a3721] to-[#6d4c41]"
-                        />
-                        <RequestCard
-                            company="UD. Berkah Alam"
-                            location="Jembrana, Bali"
-                            volume="2 Ton"
-                            price="Rp 42.500"
-                            type="Kakao Kering"
-                            bgColor="from-[#3e2723] to-[#5d4037]"
-                        />
-                        <RequestCard
-                            company="Pengepul Jaya Lampung"
-                            location="Metro, Lampung"
-                            volume="800 Kg"
-                            price="Rp 68.000"
-                            type="Lada Hitam"
-                            bgColor="from-[#212121] to-[#424242]"
-                        />
+                        {isLoading ? (
+                            <div className="col-span-full flex justify-center py-10">
+                                <p className="text-gray-500">Memuat permintaan...</p>
+                            </div>
+                        ) : listings.length > 0 ? (
+                            listings.map((listing: any, index: number) => {
+                                // Karena UPLOAD_PATH di backend kosong, FileServer membaca dari root folder aplikasi (/app)
+                                // Sedangkan gambar disimpan di /app/storage/uploads/
+                                // Jadi kita harus menambahkan /storage sebelum URL gambarnya
+                                const imageUrl = listing.image_url ? `http://43.157.248.229:8080/uploads/storage${listing.image_url}` : null;
+                                
+                                return (
+                                <RequestCard
+                                    key={listing.id || index}
+                                    title={listing.title}
+                                    company={listing.company_name || "Perusahaan"}
+                                    location={listing.location || "Lokasi"}
+                                    volume={`${listing.min_volume || 0} Kg`}
+                                    price={`Rp ${listing.price_buy?.toLocaleString('id-ID') || 0}`}
+                                    type={listing.commodity?.name || "Komoditas"}
+                                    imageUrl={imageUrl}
+                                    bgColor={
+                                        index % 3 === 0 ? "from-[#4a3721] to-[#6d4c41]" :
+                                        index % 3 === 1 ? "from-[#3e2723] to-[#5d4037]" :
+                                        "from-[#212121] to-[#424242]"
+                                    }
+                                />
+                            )})
+                        ) : (
+                            <div className="col-span-full flex justify-center py-10">
+                                <p className="text-gray-500">Belum ada permintaan terbaru.</p>
+                            </div>
+                        )}
                     </div>
+
 
                     <div className="flex justify-center mt-16">
                         <button className="flex items-center gap-2 px-8 py-3.5 bg-bg-soft hover:bg-gray-200 text-gray-900 font-bold rounded-xl transition-all border border-gray-200">

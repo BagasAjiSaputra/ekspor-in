@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   ShieldCheck,
@@ -9,15 +11,20 @@ import {
   LogOut,
   Search,
   Bell,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { Logout } from "@/features/auth/logout";
 
 export default function SuperadminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
     <div className="flex min-h-screen bg-[#F9FAFB] text-gray-800 font-manrope">
       {/* Sidebar */}
@@ -32,42 +39,50 @@ export default function SuperadminLayout({
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto mt-4">
           <Link
             href="/superadmin"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl bg-white text-green-700 shadow-sm border border-gray-100"
+            className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+              pathname === "/superadmin"
+                ? "bg-white text-green-700 shadow-sm border border-gray-100"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            <ShieldCheck className="mr-3 h-5 w-5" />
+            <ShieldCheck className={`mr-3 h-5 w-5 ${pathname === "/superadmin" ? "" : "text-gray-400"}`} />
             Verifikasi Agregator
           </Link>
 
           <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            href="/superadmin/listings"
+            className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+              pathname.includes("/superadmin/listings")
+                ? "bg-white text-green-700 shadow-sm border border-gray-100"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            <FileText className="mr-3 h-5 w-5 text-gray-400" />
+            <FileText className={`mr-3 h-5 w-5 ${pathname.includes("/superadmin/listings") ? "" : "text-gray-400"}`} />
             Moderasi Postingan
           </Link>
 
           <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            href="/superadmin/commodities"
+            className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+              pathname.includes("/superadmin/commodities")
+                ? "bg-white text-green-700 shadow-sm border border-gray-100"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            <Package className="mr-3 h-5 w-5 text-gray-400" />
+            <Package className={`mr-3 h-5 w-5 ${pathname.includes("/superadmin/commodities") ? "" : "text-gray-400"}`} />
             Master Komoditas
           </Link>
 
           <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            href="/superadmin/users"
+            className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+              pathname.includes("/superadmin/users")
+                ? "bg-white text-green-700 shadow-sm border border-gray-100"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            <AlertCircle className="mr-3 h-5 w-5 text-gray-400" />
-            Laporan Curiga
-          </Link>
-
-          <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            <Ban className="mr-3 h-5 w-5 text-gray-400" />
-            Ban User
+            <Users className={`mr-3 h-5 w-5 ${pathname.includes("/superadmin/users") ? "" : "text-gray-400"}`} />
+            Manajemen User
           </Link>
         </nav>
 
@@ -79,13 +94,15 @@ export default function SuperadminLayout({
             <Settings className="mr-3 h-5 w-5 text-gray-400" />
             Pengaturan
           </Link>
-          <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            <LogOut className="mr-3 h-5 w-5 text-gray-400" />
-            Keluar
-          </Link>
+          <form action={Logout}>
+            <button
+              type="submit"
+              className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+            >
+              <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+              Keluar
+            </button>
+          </form>
         </div>
       </aside>
 

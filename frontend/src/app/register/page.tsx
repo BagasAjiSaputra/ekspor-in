@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Truck, ShieldCheck, Leaf, Headphones, Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
 
-import { authService } from "@/services/auth";
+import { register } from "@/features/auth/register";
+import { authService } from "@/services/auth"; // keep for reset password for now
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -21,8 +22,7 @@ export default function RegisterPage() {
         confirmPassword: ""
     });
 
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const clientRegister = async (formDataEvent: FormData) => {
         
         if (formData.password !== formData.confirmPassword) {
             setError("Kata sandi dan konfirmasi kata sandi tidak cocok.");
@@ -33,11 +33,15 @@ export default function RegisterPage() {
         setError(null);
 
         try {
-            await authService.register({
-                name: formData.name,
-                email: formData.email,
-                password: formData.password
-            });
+            const fd = new FormData();
+            fd.append("name", formData.name);
+            fd.append("email", formData.email);
+            fd.append("password", formData.password);
+            
+            const res = await register(fd);
+            if (res && res.error) {
+                throw new Error(res.error);
+            }
             
             // Berhasil daftar, arahkan ke login
             router.push("/login?registered=true");
@@ -68,7 +72,7 @@ export default function RegisterPage() {
                     <p className="text-gray-500 text-sm font-medium">Buat akun untuk mulai menggunakan Eksporin.</p>
                 </div>
 
-                <form className="space-y-3" onSubmit={handleRegister}>
+                <form className="space-y-3" action={clientRegister}>
                     {error && (
                         <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold p-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
                             {error}
