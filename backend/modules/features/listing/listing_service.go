@@ -96,7 +96,7 @@ func GetListingByIDService(id uuid.UUID) ([]models.Listing, error) {
 	return listing, nil
 }
 
-func DeleteListingService(id uuid.UUID, userID uuid.UUID) (*models.Listing, error) {
+func DeleteListingService(id uuid.UUID, userID uuid.UUID, role string) (*models.Listing, error) {
 
 	listing, err := GetListingByListingID(id)
 
@@ -104,7 +104,7 @@ func DeleteListingService(id uuid.UUID, userID uuid.UUID) (*models.Listing, erro
 		return nil, errors.New("Listing Tidak Ditemukan")
 	}
 
-	if listing.UserID != userID {
+	if role != "admin" && listing.UserID != userID {
 		return nil, errors.New("Unauthorized to delete this listing")
 	}
 

@@ -43,6 +43,7 @@ func Router() {
 	protectedMux.HandleFunc("/users", admin.AdminRouter)
 	protectedMux.HandleFunc("/approve", admin.AdminVerifyUser)
 	protectedMux.HandleFunc("/announcement", announcement.AnnouncementRouter)
+	protectedMux.HandleFunc("/ban", admin.BanRouter)
 
 	root.Handle("/", middleware.Logger(publicMux))
 
