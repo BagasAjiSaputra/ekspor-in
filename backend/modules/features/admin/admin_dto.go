@@ -24,7 +24,18 @@ type AllUserData struct {
 	Role		string		`json:"role"`
 	IsVerified	string		`json:"is_verified"`
 	IsRejected	bool		`json:"is_rejected"`
+	IsBanned	bool		`json:"is_banned"`
 	CreatedAt	time.Time	`json:"created_at"`
 	ResetToken	*string		`json:"reset_token"`
 	ResetExp	*time.Time	`json:"reset_exp"`
+}
+
+type BanRequest struct {
+	UserID uuid.UUID `json:"user_id"`
+}
+
+type BanResponse struct {
+	Message  string `json:"message"`
+	UserID   uuid.UUID `json:"user_id"`
+	IsBanned bool   `json:"is_banned"`
 }
