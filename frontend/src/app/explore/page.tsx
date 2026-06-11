@@ -15,9 +15,29 @@ import {
     ChevronRight,
     SearchIcon
 } from "lucide-react";
+import { getListings } from "@/features/listing/get_all_listing";
+import { BASE_URL } from "@/features/global/url";
+import { GetProfile } from "@/features/auth/get_profile";
 
-const Navbar = () => (
-    <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
+const Navbar = () => {
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+    React.useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const profile = await GetProfile();
+                if (profile && !profile.error && profile.id) {
+                    setIsLoggedIn(true);
+                }
+            } catch (err) {
+                // Not logged in
+            }
+        };
+        checkAuth();
+    }, []);
+
+    return (
+        <nav className="flex items-center justify-between px-8 py-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 w-full sticky top-0 z-50">
         <div className="flex items-center gap-8">
             <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -28,18 +48,35 @@ const Navbar = () => (
             </div>
         </div>
         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
-                    <Bell size={20} className="text-gray-600" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            {!isLoggedIn && (
+                <div className="flex items-center gap-2">
+                    <Link href="/login">
+                        <button className="text-gray-600 hover:text-primary px-4 py-2 text-sm font-semibold transition-colors cursor-pointer">
+                            Masuk
+                        </button>
+                    </Link>
+                    <Link href="/register">
+                        <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                            Daftar
+                        </button>
+                    </Link>
                 </div>
-                <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200">
-                    <User size={20} className="text-gray-600" />
-                </Link>
-            </div>
+            )}
+            {isLoggedIn && (
+                <div className="flex items-center gap-3">
+                    <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
+                        <Bell size={20} className="text-gray-600" />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200">
+                        <User size={20} className="text-gray-600" />
+                    </Link>
+                </div>
+            )}
         </div>
     </nav>
-);
+    );
+};
 
 const Footer = () => (
     <footer className="bg-bg-soft pt-16 pb-8 border-t border-gray-200 mt-20">
@@ -79,10 +116,13 @@ const ProductCard = ({ title, location, price, unit, imageUrl, tag }: any) => (
                     </span>
                 </div>
             )}
-            {/* Real image would go here */}
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold text-sm bg-gradient-to-br from-gray-100 to-gray-200">
-                {title} Image
-            </div>
+            {imageUrl ? (
+                <img src={imageUrl} alt={title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold text-sm bg-gradient-to-br from-gray-100 to-gray-200">
+                    {title} Image
+                </div>
+            )}
         </div>
         <div className="p-5">
             <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
@@ -112,111 +152,146 @@ export default function ExplorePage() {
         { name: "Sayur & Buah", active: false },
     ];
 
-    const products = [
-        { title: "Beras Pandan Wangi", location: "Pak Budi, Cianjur", price: "18.500", unit: "kg", tag: "ORGANIK" },
-        { title: "Kopi Arabika Gayo", location: "Ibu Siti, Aceh Tengah", price: "125.000", unit: "kg", tag: "EXPORT QUALITY" },
-        { title: "Lada Putih Muntok", location: "Pak Heru, Bangka Belitung", price: "95.000", unit: "kg" },
-        { title: "Cengkeh Kering Manado", location: "Koperasi Tani, Minahasa", price: "110.000", unit: "kg" },
-        { title: "Wortel Organik Brastagi", location: "Pak Anton, Karo", price: "12.000", unit: "kg" },
-        { title: "Pisang Cavendish Grade A", location: "PT Tani Makmur, Lampung", price: "15.000", unit: "kg" },
-    ];
+    const [listings, setListings] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [searchQuery, setSearchQuery] = React.useState("");
+    const [activeSearch, setActiveSearch] = React.useState("");
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const ITEMS_PER_PAGE = 6;
+
+    React.useEffect(() => {
+        const fetchListings = async () => {
+            try {
+                const response = await getListings();
+                setListings(Array.isArray(response) ? response : (response as any)?.data || []);
+            } catch (error) {
+                console.error("Failed to fetch listings:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchListings();
+    }, []);
 
     return (
         <div className="min-h-screen bg-bg-soft font-body">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-6 py-10">
-                <div className="flex flex-col md:flex-row gap-10">
-                    {/* Sidebar Filter */}
-                    <aside className="w-full md:w-64 space-y-8">
-                        <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">Pasar Komoditas</h1>
-                        <p className="text-gray-500 text-sm">Menampilkan <span className="text-primary font-bold">24 hasil</span> untuk "Hasil Bumi Unggulan"</p>
+                <div className="flex flex-col gap-10">
+                    {/* Header & Search Section (Moved to top) */}
+                    <div className="w-full">
+                        <div className="mb-8">
+                            <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">Pasar Komoditas</h1>
+                            <p className="text-gray-500 text-sm mt-2">Menampilkan <span className="text-primary font-bold">{isLoading ? "..." : (listings.filter((l: any) => !activeSearch || l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase())).length)} hasil</span> {activeSearch ? `untuk "${activeSearch}"` : "keseluruhan"}</p>
+                        </div>
                         
-                        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 mt-10">
-                            <div className="flex items-center gap-2 mb-8">
-                                <Filter size={20} className="text-primary" />
-                                <h3 className="font-bold text-gray-900">Filter</h3>
+                        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6">
+                            <div className="flex items-center gap-2 md:w-auto w-full shrink-0">
+                                <h3 className="font-bold text-gray-900 whitespace-nowrap">Pencarian</h3>
                             </div>
 
-                            <div className="space-y-6">
-                                <div>
-                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">KATEGORI</h4>
-                                    <div className="space-y-3">
-                                        {categories.map((cat, idx) => (
-                                            <label key={idx} className="flex items-center gap-3 cursor-pointer group">
-                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${cat.active ? 'bg-primary border-primary' : 'border-gray-200 group-hover:border-primary'}`}>
-                                                    {cat.active && <Check size={12} className="text-white" />}
-                                                </div>
-                                                <span className={`text-sm font-medium ${cat.active ? 'text-gray-900' : 'text-gray-500'}`}>{cat.name}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 border-t border-gray-100">
-                                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">LOKASI ASAL</h4>
-                                    <div className="relative">
-                                        <select className="w-full bg-bg-soft border border-gray-100 rounded-xl px-4 py-3 appearance-none text-xs font-bold text-gray-900 focus:outline-none">
-                                            <option>Semua Wilayah</option>
-                                        </select>
-                                        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    </div>
-                                </div>
-
-                                <button className="w-full py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary/20 mt-4">
-                                    Terapkan Filter
-                                </button>
+                            <div className="flex-1 w-full relative">
+                                <input 
+                                    type="text" 
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setActiveSearch(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') setActiveSearch(searchQuery); }}
+                                    placeholder="Cari komoditas..." 
+                                    className="w-full bg-bg-soft border border-gray-100 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                />
+                                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             </div>
-                        </div>
 
-                        {/* Program Mitra Tani Promo */}
-                        <div className="relative rounded-[32px] overflow-hidden bg-[#7a6459] p-8 text-white group cursor-pointer shadow-lg">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                            <h3 className="text-xl font-bold mb-2 relative z-10">Program Mitra Tani</h3>
-                            <p className="text-xs text-white/80 mb-6 relative z-10">Dukung langsung petani lokal dengan pembelian kontrak jangka panjang.</p>
-                            <Link href="#" className="inline-flex items-center gap-1 text-xs font-bold border-b border-white/40 pb-1 relative z-10 hover:border-white transition-all">
-                                Pelajari Selengkapnya
-                            </Link>
                         </div>
-                    </aside>
+                    </div>
 
                     {/* Main Content */}
-                    <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <button className="px-5 py-2 bg-primary text-white text-xs font-bold rounded-full">Terbaru</button>
-                                <button className="px-5 py-2 bg-white text-gray-500 text-xs font-bold rounded-full hover:bg-gray-100 transition-colors">Harga Terendah</button>
-                                <button className="px-5 py-2 bg-white text-gray-500 text-xs font-bold rounded-full hover:bg-gray-100 transition-colors">Rating Tertinggi</button>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Urutkan:</span>
-                                <div className="relative">
-                                    <button className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl text-sm font-bold text-gray-900 border border-transparent shadow-sm">
-                                        Rekomendasi
-                                        <ChevronDown size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="w-full">
+
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {products.map((product, idx) => (
-                                <ProductCard key={idx} {...product} />
-                            ))}
+                            {isLoading ? (
+                                <div className="col-span-full flex justify-center py-10">
+                                    <p className="text-gray-500">Memuat data...</p>
+                                </div>
+                            ) : listings.length > 0 ? (
+                                (() => {
+                                    const filteredListings = listings.filter((l: any) => !activeSearch || l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase()));
+                                    
+                                    if (filteredListings.length === 0) {
+                                        return (
+                                            <div className="col-span-full flex justify-center py-10">
+                                                <p className="text-gray-500">Tidak ada barang yang cocok dengan pencarian "{activeSearch}".</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    const paginatedListings = filteredListings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+                                    return paginatedListings.map((listing: any, index: number) => {
+                                        const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
+                                        return (
+                                            <ProductCard 
+                                                key={listing.id || index} 
+                                                title={listing.title}
+                                                location={listing.location || "Lokasi"}
+                                                price={listing.price_buy?.toLocaleString('id-ID') || 0}
+                                                unit="kg"
+                                                imageUrl={imageUrl}
+                                                tag={listing.commodity?.name}
+                                            />
+                                        );
+                                    });
+                                })()
+                            ) : (
+                                <div className="col-span-full flex justify-center py-10">
+                                    <p className="text-gray-500">Belum ada barang.</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex justify-center items-center gap-2 mt-16">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-400">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white font-bold">1</button>
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 font-bold hover:bg-gray-300 transition-colors">2</button>
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 font-bold hover:bg-gray-300 transition-colors">3</button>
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-400 hover:bg-gray-300 transition-colors">
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
+                        {listings.length > 0 && (() => {
+                            const filteredListings = listings.filter((l: any) => !activeSearch || l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase()));
+                            const totalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE);
+                            
+                            if (totalPages <= 1) return null;
+
+                            return (
+                                <div className="flex justify-center items-center gap-2 mt-16">
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${currentPage === 1 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    
+                                    {Array.from({ length: totalPages }).map((_, i) => (
+                                        <button 
+                                            key={i}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${currentPage === i + 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                        className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${currentPage === totalPages ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </main>

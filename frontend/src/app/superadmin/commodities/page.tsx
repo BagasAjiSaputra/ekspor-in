@@ -1,13 +1,24 @@
 import React from "react";
 import { Package } from "lucide-react";
 import { GetAllCommodity } from "@/features/commodity/get_all_commodity";
-import { CommodityTable } from "./components/CommodityTable";
+import { GetAllListings } from "@/features/listing/get_all_listings";
+import { CommodityTable, Commodity } from "./components/CommodityTable";
 import Link from "next/link";
 
 export default async function CommoditiesDashboard() {
-  const res = await GetAllCommodity();
+  const [res, listingsRes] = await Promise.all([
+    GetAllCommodity(),
+    GetAllListings()
+  ]);
+
   // Handle case where res might be an error or not an array
-  const commodities = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+  const rawCommodities = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+  const listings = Array.isArray(listingsRes?.data) ? listingsRes.data : Array.isArray(listingsRes) ? listingsRes : [];
+
+  const commodities: Commodity[] = rawCommodities.map((c: any) => ({
+    ...c,
+    usageCount: listings.filter((l: any) => l.commodity_id === c.id).length
+  }));
   
   return (
     <div className="max-w-7xl mx-auto pb-10">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getListings } from "@/features/listing/get_all_listing";
 import { GetProfile } from "@/features/auth/get_profile";
+import { BASE_URL } from "@/features/global/url";
 
 
 // Brand Icons
@@ -60,7 +61,7 @@ const Navbar = () => {
     }, []);
 
     return (
-        <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
+        <nav className="flex items-center justify-between px-8 py-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 w-full sticky top-0 z-50">
             <div className="flex items-center gap-8">
                 <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
@@ -72,11 +73,18 @@ const Navbar = () => {
             </div>
             <div className="flex items-center gap-4">
                 {!isLoggedIn && (
-                    <Link href="/register">
-                        <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-                            Daftar
-                        </button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/login">
+                            <button className="text-gray-600 hover:text-primary px-4 py-2 text-sm font-semibold transition-colors cursor-pointer">
+                                Masuk
+                            </button>
+                        </Link>
+                        <Link href="/register">
+                            <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
+                                Daftar
+                            </button>
+                        </Link>
+                    </div>
                 )}
                 {isLoggedIn && (
                     <div className="flex items-center gap-3">
@@ -261,27 +269,43 @@ export default function HomePage() {
 
 
 
-            <main className="max-w-7xl mx-auto px-6">
-                {/* Hero Section */}
-                <section className="relative py-20 flex flex-col items-start min-h-[600px] overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute right-[-100px] top-[-100px] w-[600px] h-[600px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
+            {/* Hero Section Full Width */}
+            <section className="relative isolate pt-20 pb-28 flex flex-col items-center min-h-[550px] overflow-hidden justify-start w-full">
+                    {/* Video Background */}
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover -z-20"
+                    >
+                        <source src="/hero_background.mp4" type="video/mp4" />
+                    </video>
+                    
+                    {/* Overlay to ensure text readability */}
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] -z-10"></div>
 
-                    <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">
-                        Edisi Panen 2024
+                    {/* Content Container */}
+                    <div className="max-w-7xl mx-auto px-6 w-full flex flex-col items-start relative z-10">
+                        <div className="bg-white/80 text-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm border border-white">
+                        Edisi Panen 2026
                     </div>
 
-                    <h1 className="text-6xl font-extrabold text-[#113114] leading-[1.1] max-w-2xl">
+                    <h1 className="text-6xl font-extrabold text-[#113114] leading-[1.1] max-w-2xl drop-shadow-sm">
                         Temukan Permintaan <span className="text-primary">Komoditas</span> Terdekat
                     </h1>
 
-                    <p className="text-gray-500 mt-6 max-w-lg text-lg leading-relaxed">
+                    <p className="text-gray-800 font-medium mt-6 max-w-lg text-lg leading-relaxed drop-shadow-sm">
                         Hubungkan hasil bumi Anda langsung ke pengepul terverifikasi dengan harga pasar terbaik hari ini.
                     </p>
 
-                    <SearchBox />
-                </section>
+                    <div className="w-full">
+                        <SearchBox />
+                    </div>
+                </div>
+            </section>
 
+            <main className="max-w-7xl mx-auto px-6">
                 {/* Latest Requests */}
                 <section className="py-20 mt-10">
                     <div className="flex items-end justify-between mb-10">
@@ -305,11 +329,11 @@ export default function HomePage() {
                                 <p className="text-gray-500">Memuat permintaan...</p>
                             </div>
                         ) : listings.length > 0 ? (
-                            listings.map((listing: any, index: number) => {
+                            listings.slice(0, 6).map((listing: any, index: number) => {
                                 // Karena UPLOAD_PATH di backend kosong, FileServer membaca dari root folder aplikasi (/app)
                                 // Sedangkan gambar disimpan di /app/storage/uploads/
                                 // Jadi kita harus menambahkan /storage sebelum URL gambarnya
-                                const imageUrl = listing.image_url ? `http://43.157.248.229:8080/uploads/storage${listing.image_url}` : null;
+                                const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
                                 
                                 return (
                                 <RequestCard
@@ -337,10 +361,12 @@ export default function HomePage() {
 
 
                     <div className="flex justify-center mt-16">
-                        <button className="flex items-center gap-2 px-8 py-3.5 bg-bg-soft hover:bg-gray-200 text-gray-900 font-bold rounded-xl transition-all border border-gray-200">
-                            Muat Lebih Banyak
-                            <ChevronDown size={20} />
-                        </button>
+                        <Link href="/explore">
+                            <button className="flex items-center gap-2 px-8 py-3.5 bg-bg-soft hover:bg-gray-200 text-gray-900 font-bold rounded-xl transition-all border border-gray-200">
+                                Muat Lebih Banyak
+                                <ChevronDown size={20} />
+                            </button>
+                        </Link>
                     </div>
                 </section>
             </main>
