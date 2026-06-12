@@ -23,13 +23,17 @@ import { GetProfile } from "@/features/auth/get_profile";
 import { UpdateProfile } from "@/features/auth/update_profile";
 import { VerifyRole } from "@/features/auth/role_verified";
 import { Logout } from "@/features/auth/logout";
+import { GetCompany } from "@/features/company/get_company";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
     const router = useRouter();
     const [sidebarActive, setSidebarActive] = useState("Profil");
     const [profileData, setProfileData] = useState<any>(null);
+    const [companyData, setCompanyData] = useState<any>(null);
     const [formData, setFormData] = useState({ name: '', email: '', address: '' });
+    const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState({ type: '', text: '' });
@@ -62,6 +66,25 @@ export default function ProfilePage() {
                     email: user.email || '',
                     address: user.address || ''
                 });
+                if (user.photo_url || user.image) {
+                    setProfileImagePreview(user.photo_url || user.image);
+                } else {
+                    const savedImage = localStorage.getItem("profile_picture");
+                    if (savedImage) {
+                        setProfileImagePreview(savedImage);
+                    }
+                }
+
+                // Fetch Company Data
+                try {
+                    const company = await GetCompany();
+                    if (company && !company.error) {
+                        setCompanyData(company);
+                    }
+                } catch (e) {
+                    console.error("No company found", e);
+                }
+
             } catch (err: any) {
                 setError(err.message || "Gagal memuat profil");
             } finally {
@@ -98,6 +121,24 @@ export default function ProfilePage() {
         }
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProfileImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setProfileImagePreview(base64String);
+                try {
+                    localStorage.setItem("profile_picture", base64String);
+                } catch (err) {
+                    console.warn("Could not save image to localStorage, possibly too large.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleApplyVerification = async () => {
         setIsApplying(true);
         try {
@@ -119,11 +160,10 @@ export default function ProfilePage() {
         { name: "Beranda", icon: <Home size={20} />, active: false, href: "/home" },
         { name: "Profil", icon: <User size={20} />, active: true, href: "/profile" },
         { name: "Buat Postingan", icon: <PlusSquare size={20} />, active: false, href: "/create-post" },
-        { name: "Edit Aktif", icon: <Edit3 size={20} />, active: false, href: "/active-posts" },
+        { name: "Daftar Postingan", icon: <Edit3 size={20} />, active: false, href: "/active-posts" },
     ];
 
     const bottomMenuItems = [
-        { name: "Pengaturan", icon: <Settings size={20} />, active: false },
         { name: "Keluar", icon: <LogOut size={20} />, active: false },
     ];
 
@@ -241,35 +281,45 @@ export default function ProfilePage() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-10 max-w-7xl">
-                <header className="mb-10">
+            <main className="flex-1 p-6 md:p-8 max-w-7xl">
+                <header className="mb-6">
                     <h2 className="text-3xl font-extrabold text-gray-900">Profil Pengepul</h2>
-                    <p className="text-gray-500 mt-2 font-medium">
+                    <p className="text-gray-500 mt-2 font-medium text-sm">
                         Kelola identitas bisnis dan informasi kontak Anda untuk meningkatkan kepercayaan petani.
                     </p>
                 </header>
 
-                <div className="flex gap-8">
+                <div className="flex gap-6">
                     {/* Left Column: Profile Card & Security */}
-                    <div className="w-80 space-y-6">
+                    <div className="w-80 space-y-4">
                         {/* Profile Card */}
-                        <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm flex flex-col items-center">
-                            <div className="relative mb-6">
-                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <div className="bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm flex flex-col items-center">
+                            <div className="relative mb-4 group">
+                                <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg relative">
                                     <img
-                                        src="https://avatar.vercel.sh/agro-jaya-mandiri?size=128"
+                                        src={profileImagePreview || `https://avatar.vercel.sh/${profileData?.name?.replace(/\s+/g, '-') || 'user'}?size=128`}
                                         alt="Avatar"
                                         className="w-full h-full object-cover"
                                     />
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                        <Camera className="text-white" size={24} />
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        onChange={handleImageChange}
+                                        title="Ganti Foto Profil"
+                                    />
                                 </div>
-                                <button className="absolute bottom-1 right-1 bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-dark transition-colors border-2 border-white">
+                                <label className="absolute bottom-1 right-1 bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-dark transition-colors border-2 border-white cursor-pointer z-10 pointer-events-none">
                                     <Camera size={16} />
-                                </button>
+                                </label>
                             </div>
 
                             {profileData?.is_verified === "verified" ? (
                                 <div className="flex items-center gap-1.5 bg-green-100 text-[#237127] px-3 py-1 rounded-full mb-4">
-                                    <CheckCircle size={14} fill="currentColor" className="text-white" />
+                                    <CheckCircle size={14} />
                                     <span className="text-[10px] font-bold uppercase tracking-wider">Terverifikasi</span>
                                 </div>
                             ) : profileData?.is_verified === "pending" ? (
@@ -285,39 +335,30 @@ export default function ProfilePage() {
                             <h3 className="text-xl font-extrabold text-gray-900 text-center">
                                 {isLoading ? "Memuat..." : profileData?.name || "Nama Tidak Tersedia"}
                             </h3>
-                            <p className="text-gray-400 text-sm mt-1">Bergabung sejak Maret 2023</p>
-                        </div>
-
-                        {/* Security Card */}
-                        <div className="bg-[#FFE5D9] rounded-[32px] p-6 flex gap-4 border border-[#FFD5C5]">
-                            <div className="w-12 h-12 bg-white/50 backdrop-blur-sm rounded-2xl flex items-center justify-center text-[#E64A19] shadow-sm">
-                                <Shield size={24} />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-[#4E1D0E] text-sm">Keamanan Akun</h4>
-                                <p className="text-[#8D4E3C] text-[11px] font-medium leading-relaxed mt-1">
-                                    Profil yang lengkap meningkatkan skor kepercayaan hingga 85% di mata petani.
-                                </p>
-                            </div>
+                            <p className="text-gray-400 text-sm mt-1">
+                                {profileData?.created_at 
+                                    ? `Bergabung sejak ${new Date(profileData.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}` 
+                                    : "Bergabung sejak saat ini"}
+                            </p>
                         </div>
                     </div>
 
                     {/* Right Column: Update Forms */}
-                    <div className="flex-1 bg-white rounded-[32px] p-10 border border-gray-100 shadow-sm">
+                    <div className="flex-1 bg-white rounded-[32px] p-6 md:p-8 border border-gray-100 shadow-sm">
                         {/* Business Info Section */}
-                        <section className="mb-10">
-                            <h3 className="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+                        <section className="mb-6">
+                            <h3 className="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
                                 Informasi Bisnis
                                 <div className="h-[1px] flex-1 bg-gray-100 ml-2"></div>
                             </h3>
 
-                            <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Perusahaan / Pengepul</label>
                                     <input
                                         type="text"
                                         placeholder="Agro Jaya Mandiri"
-                                        value={profileData?.name || ""}
+                                        value={companyData?.company_name || profileData?.name || ""}
                                         readOnly
                                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body cursor-default"
                                     />
@@ -327,7 +368,7 @@ export default function ProfilePage() {
                                     <input
                                         type="text"
                                         readOnly
-                                        value="EX-2023-0042"
+                                        value={companyData?.id || "Belum terdaftar"}
                                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-400 focus:outline-none cursor-not-allowed font-body"
                                     />
                                 </div>
@@ -336,23 +377,23 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Gudang Utama</label>
                                 <textarea
-                                    rows={4}
-                                    value={profileData?.address || ""}
+                                    rows={2}
+                                    value={companyData?.address || profileData?.address || ""}
                                     readOnly
                                     placeholder="Jl. Raya Pertanian No. 42, Pangalengan, Kabupaten Bandung, Jawa Barat 40378"
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body cursor-default"
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3 px-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body cursor-default"
                                 ></textarea>
                             </div>
                         </section>
 
                         {/* Personal Contact Section */}
-                        <section className="mb-10">
-                            <h3 className="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+                        <section className="mb-0">
+                            <h3 className="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
                                 Kontak Personal
                                 <div className="h-[1px] flex-1 bg-gray-100 ml-2"></div>
                             </h3>
 
-                            <div className="grid grid-cols-2 gap-6 items-end">
+                            <div className="grid grid-cols-2 gap-4 items-end">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Bisnis</label>
                                     <div className="relative group">
@@ -369,13 +410,15 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-end gap-3 mb-1">
-                                    <Link 
-                                        href="/company/register"
-                                        className="bg-white border-2 border-[#113114] text-[#113114] hover:bg-gray-50 px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                                    >
-                                        <Building2 size={18} />
-                                        Daftarkan Perusahaan
-                                    </Link>
+                                    {!companyData && (
+                                        <Link 
+                                            href="/company/register"
+                                            className="bg-white border-2 border-[#113114] text-[#113114] hover:bg-gray-50 px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                                        >
+                                            <Building2 size={18} />
+                                            Daftarkan Perusahaan
+                                        </Link>
+                                    )}
                                     <button 
                                         onClick={() => setShowEditModal(true)}
                                         className="bg-[#113114] hover:bg-black text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 active:translate-y-0"
