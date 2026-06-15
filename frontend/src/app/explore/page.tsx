@@ -96,9 +96,9 @@ const Footer = () => (
     </footer>
 );
 
-const ProductCard = ({ title, location, price, unit, imageUrl, tag }: any) => (
-    <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-        <div className="relative h-48 bg-gray-100 overflow-hidden">
+const ProductCard = ({ id, title, location, price, unit, imageUrl, tag, userPhotoUrl, userName }: any) => (
+    <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all group flex flex-col">
+        <div className="relative h-48 bg-gray-100 overflow-hidden shrink-0">
             <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
             {/* Tag like 'ORGANIK' or 'EXPORT QUALITY' */}
             {tag && (
@@ -116,7 +116,14 @@ const ProductCard = ({ title, location, price, unit, imageUrl, tag }: any) => (
                 </div>
             )}
         </div>
-        <div className="p-5">
+        <div className="p-5 flex-1 flex flex-col">
+            <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                    <img src={userPhotoUrl || `https://avatar.vercel.sh/${userName?.replace(/\s+/g, '-') || 'user'}?size=32`} alt={userName || "User"} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs font-bold text-gray-600 line-clamp-1">{userName || "Pengepul"}</span>
+            </div>
+
             <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors line-clamp-1">{title}</h3>
             <div className="flex items-center gap-1 mt-1 text-gray-500">
                 <MapPin size={14} />
@@ -129,9 +136,11 @@ const ProductCard = ({ title, location, price, unit, imageUrl, tag }: any) => (
                 <span className="text-xs font-bold text-gray-400">/{unit}</span>
             </div>
 
-            <button className="w-full mt-6 py-3.5 bg-secondary hover:bg-orange-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-secondary/20 active:scale-95">
-                Lihat Detail
-            </button>
+            <Link href={`/listing/${id || ''}`} className="flex items-center justify-center w-full mt-auto pt-6">
+                <div className="w-full py-3.5 bg-secondary hover:bg-orange-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-secondary/20 active:scale-95 text-center">
+                    Lihat Detail
+                </div>
+            </Link>
         </div>
     </div>
 );
@@ -145,6 +154,7 @@ export default function ExplorePage() {
     ];
 
     const [listings, setListings] = React.useState<any[]>([]);
+    const [profiles, setProfiles] = React.useState<Record<string, any>>({});
     const [isLoading, setIsLoading] = React.useState(true);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [activeSearch, setActiveSearch] = React.useState("");
@@ -155,7 +165,21 @@ export default function ExplorePage() {
         const fetchListings = async () => {
             try {
                 const response = await getListings();
-                setListings(Array.isArray(response) ? response : (response as any)?.data || []);
+                const data = Array.isArray(response) ? response : (response as any)?.data || [];
+                setListings(data);
+
+                // Fetch profiles for unique user_ids
+                const uniqueUserIds = [...new Set(data.map((l: any) => l.user_id).filter(Boolean))];
+                const { GetPublicProfile } = await import('@/features/auth/get_public_profile');
+                const profilesData = await Promise.all(uniqueUserIds.map(userId => GetPublicProfile(userId as string)));
+                
+                const profilesMap: Record<string, any> = {};
+                profilesData.forEach((profile, idx) => {
+                    if (profile) {
+                        profilesMap[uniqueUserIds[idx] as string] = profile;
+                    }
+                });
+                setProfiles(profilesMap);
             } catch (error) {
                 console.error("Failed to fetch listings:", error);
             } finally {
@@ -227,15 +251,32 @@ export default function ExplorePage() {
 
                                     return paginatedListings.map((listing: any, index: number) => {
                                         const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
+                                        
+                                        // Ambil nama dari company atau user atau profile
+                                        const publicProfile = profiles[listing.user_id];
+                                        const companyName = listing.company?.company_name;
+                                        const userName = listing.user?.name || publicProfile?.name;
+                                        const displayName = companyName || userName || "Pengepul";
+                                        
+                                        // Foto Profil menggunakan user_image sesuai profil user
+                                        let userPhotoUrl = null;
+                                        const rawPhoto = listing.user?.user_image || listing.user?.photo_url || listing.company?.logo_url || publicProfile?.user_image;
+                                        if (rawPhoto) {
+                                            userPhotoUrl = rawPhoto.startsWith('http') ? rawPhoto : `${BASE_URL}${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`;
+                                        }
+
                                         return (
                                             <ProductCard 
                                                 key={listing.id || index} 
+                                                id={listing.id}
                                                 title={listing.title}
                                                 location={listing.location || "Lokasi"}
                                                 price={listing.price_buy?.toLocaleString('id-ID') || 0}
                                                 unit="kg"
                                                 imageUrl={imageUrl}
                                                 tag={listing.commodity?.name}
+                                                userPhotoUrl={userPhotoUrl}
+                                                userName={displayName}
                                             />
                                         );
                                     });

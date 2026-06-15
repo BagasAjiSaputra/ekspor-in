@@ -1,4 +1,4 @@
-    "use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { User } from "lucide-react";
 import { GetProfile } from "@/features/auth/get_profile";
 import NotificationBell from "./NotificationBell";
+import { BASE_URL } from "@/features/global/url";
 
 export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -20,13 +21,24 @@ export default function Navbar() {
                     setIsLoggedIn(true);
                     const userObj = profile.user || profile;
                     const savedImage = typeof window !== "undefined" ? localStorage.getItem("profile_picture") : null;
-                    setUserProfileImage(userObj.photo_url || userObj.image || savedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name || 'User')}&background=random`);
+                    const rawPhoto = userObj.user_image || userObj.photo_url || savedImage;
+                    const finalPhoto = rawPhoto
+                        ? (rawPhoto.startsWith('http') ? rawPhoto : `${BASE_URL}${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`)
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name || 'User')}&background=random`;
+                    setUserProfileImage(finalPhoto);
                 }
             } catch (err) {
                 // Not logged in
             }
         };
         checkAuth();
+
+        const handleProfileUpdate = () => {
+            checkAuth();
+        };
+
+        window.addEventListener("profile_picture_updated", handleProfileUpdate);
+        return () => window.removeEventListener("profile_picture_updated", handleProfileUpdate);
     }, []);
 
     return (

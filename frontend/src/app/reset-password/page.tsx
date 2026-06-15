@@ -74,7 +74,7 @@ function ResetPasswordForm() {
     };
 
     return (
-        <div className="bg-white w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-primary/5 p-6 md:p-8 border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-white/70 backdrop-blur-2xl w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-black/40 p-6 md:p-8 border border-white/50 animate-in fade-in zoom-in-95 duration-500 relative z-10">
             <div className="mb-6 text-center">
                 <h1 className="text-xl font-extrabold text-gray-900 mb-1">Reset Kata Sandi</h1>
                 <p className="text-gray-500 text-sm font-medium">Buat kata sandi baru untuk akun Anda.</p>
@@ -88,9 +88,9 @@ function ResetPasswordForm() {
 
             <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kata Sandi Baru</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Kata Sandi Baru</label>
                     <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">
                             <Lock size={18} />
                         </div>
                         <input
@@ -100,12 +100,12 @@ function ResetPasswordForm() {
                             onChange={(e) => setNewPassword(e.target.value)}
                             required
                             disabled={isLoading || !token || message.type === 'success'}
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                            className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3 pl-11 pr-12 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                         >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
@@ -113,9 +113,9 @@ function ResetPasswordForm() {
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Konfirmasi Kata Sandi</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Konfirmasi Kata Sandi</label>
                     <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">
                             <Lock size={18} />
                         </div>
                         <input
@@ -125,12 +125,12 @@ function ResetPasswordForm() {
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
                             disabled={isLoading || !token || message.type === 'success'}
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                            className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3 pl-11 pr-12 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                         />
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                         >
                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
@@ -164,15 +164,20 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
     return (
-        <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center p-4 relative overflow-hidden font-body">
-            {/* Background Decoration */}
-            <div className="absolute left-[-10%] top-[-10%] w-[500px] h-[500px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
-            <div className="absolute right-[-10%] bottom-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full -z-10 blur-3xl opacity-50"></div>
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden font-body">
+            {/* Background Image */}
+            <div 
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2070&auto=format&fit=crop')" }}
+            >
+                <div className="absolute inset-0 bg-[#0a1f0d]/60 mix-blend-multiply"></div>
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+            </div>
 
             {/* Logo */}
-            <div className="mb-4 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                <Link href="/home" className="text-primary font-bold text-4xl tracking-tight mb-1 block">Eksporin</Link>
-                <p className="text-gray-500 font-medium tracking-tight">Gerbang Digital Pertanian Modern</p>
+            <div className="mb-4 text-center animate-in fade-in slide-in-from-top-4 duration-700 relative z-10">
+                <Link href="/home" className="text-white font-extrabold text-5xl tracking-tight mb-1 block drop-shadow-lg">Eksporin</Link>
+                <p className="text-white/90 font-medium tracking-wide drop-shadow-md">Gerbang Digital Pertanian Modern</p>
             </div>
 
             <Suspense fallback={

@@ -18,7 +18,7 @@ import {
     CheckCircle2,
     X
 } from "lucide-react";
-import { GetAllListings } from "@/features/listing/get_all_listings";
+import { GetManageListing } from "@/features/listing/get_manage_listing";
 import { DeleteListingAction } from "@/features/listing/delete_listing";
 import { UpdateListingAction } from "@/features/listing/update_listing";
 import { BASE_URL } from "@/features/global/url";
@@ -51,7 +51,7 @@ export default function ActivePostsPage() {
     const fetchListings = async () => {
         setIsLoading(true);
         try {
-            const res = await GetAllListings();
+            const res = await GetManageListing();
             const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
             setListings(data);
         } catch (error) {
