@@ -11,126 +11,106 @@ import {
     ChevronDown,
     LayoutGrid,
     List,
-    MessageSquare
+    MessageSquare,
+    Coffee,
+    Leaf,
+    ShoppingBag,
+    Box,
+    ArrowRight
 } from "lucide-react";
 import { getListings } from "@/features/listing/get_all_listing";
-import { GetProfile } from "@/features/auth/get_profile";
+import { BASE_URL } from "@/features/global/url";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import dynamic from "next/dynamic";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
 
+const MiniMap = dynamic(() => import("./components/MiniMap"), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+});
 
-// Brand Icons
-const FacebookIcon = ({ size = 18 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-    </svg>
-);
-
-const TwitterIcon = ({ size = 18 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-    </svg>
-);
-
-const InstagramIcon = ({ size = 18 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-);
-
-const LinkedinIcon = ({ size = 18 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" />
-    </svg>
-);
-
-const Navbar = () => {
-    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string, com: string) => void, availableCommodities: string[] }) => {
+    const [location, setLocation] = React.useState("");
+    const [commodity, setCommodity] = React.useState("Semua Komoditas");
+    const [isLocating, setIsLocating] = React.useState(false);
 
     React.useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const profile = await GetProfile();
-                if (profile && !profile.error && profile.id) {
-                    setIsLoggedIn(true);
-                }
-            } catch (err) {
-                // Not logged in
-            }
-        };
-        checkAuth();
+        if ("geolocation" in navigator) {
+            setIsLocating(true);
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    try {
+                        const { latitude, longitude } = pos.coords;
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await response.json();
+                        // Try to get a meaningful local name (city, county, or village)
+                        const locName = data.address?.city || data.address?.county || data.address?.village || data.address?.state || "Lokasi Anda";
+                        setLocation(locName);
+                    } catch (e) {
+                        console.error("Geocoding failed", e);
+                    } finally {
+                        setIsLocating(false);
+                    }
+                },
+                (err) => {
+                    console.error("Geolocation failed", err);
+                    setIsLocating(false);
+                },
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+            );
+        }
     }, []);
 
     return (
-        <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 max-w-7xl mx-auto w-full sticky top-0 z-50">
-            <div className="flex items-center gap-8">
-                <Link href="/home" className="text-primary font-bold text-2xl tracking-tight">Eksporin</Link>
-                <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-500">
-                    <Link href="/home" className="text-primary border-b-2 border-primary pb-1">Home</Link>
-                    <Link href="/explore" className="hover:text-primary pb-1 transition-colors">Explore</Link>
-                    <Link href="#" className="hover:text-primary pb-1 transition-colors">About</Link>
-                    <Link href="#" className="hover:text-primary pb-1 transition-colors">Help</Link>
+        <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/50 w-full max-w-2xl mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Pilih Komoditas</label>
+                    <div className="relative">
+                        <select 
+                            value={commodity}
+                            onChange={(e) => setCommodity(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 appearance-none text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        >
+                            <option value="Semua Komoditas">Semua Komoditas</option>
+                            {availableCommodities.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                        Lokasi {isLocating && <span className="text-primary normal-case font-normal">(Melacak...)</span>}
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            placeholder="Provinsi/Kab/Kec"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-10 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        />
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={18} />
+                    </div>
                 </div>
             </div>
-            <div className="flex items-center gap-4">
-                {!isLoggedIn && (
-                    <Link href="/register">
-                        <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-                            Daftar
-                        </button>
-                    </Link>
-                )}
-                {isLoggedIn && (
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors relative">
-                            <Bell size={20} className="text-gray-600" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                        </div>
-                        <Link href="/profile" className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors border border-gray-200">
-                            <User size={20} className="text-gray-600" />
-                        </Link>
-                    </div>
-                )}
+            <button 
+                onClick={() => onSearch(location, commodity)}
+                className="w-full bg-[#113114] hover:bg-black text-white py-4 rounded-xl mt-6 flex items-center justify-center gap-2 font-bold transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5 active:translate-y-0"
+            >
+                <Search size={20} />
+                Cari Permintaan Sekarang
+            </button>
         </div>
-        </nav>
     );
 };
 
-const SearchBox = () => (
-    <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/50 w-full max-w-2xl mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Pilih Komoditas</label>
-                <div className="relative">
-                    <select className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 appearance-none text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option>Semua Komoditas</option>
-                        <option>Kopi Arabika</option>
-                        <option>Kakao Kering</option>
-                        <option>Lada Hitam</option>
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Lokasi</label>
-                <div className="relative">
-                    <input
-                        type="text"
-                        placeholder="Provinsi/Kab/Kec"
-                        className="w-full bg-white border border-gray-200 rounded-xl px-10 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                </div>
-            </div>
-        </div>
-        <button className="w-full bg-primary-dark hover:bg-black text-white py-4 rounded-xl mt-6 flex items-center justify-center gap-2 font-bold transition-all shadow-lg shadow-primary/20">
-            <Search size={20} />
-            Cari Permintaan Sekarang
-        </button>
-    </div>
-);
-
-const RequestCard = ({ title, company, location, volume, price, type, bgColor, imageUrl }: any) => (
-    <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
-        <div className="relative h-48 bg-gray-200">
+const RequestCard = ({ id, title, company, location, volume, price, type, bgColor, imageUrl, latitude, longitude }: any) => (
+    <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
+        <div className="relative h-48 bg-gray-200 shrink-0">
             {/* Image Display */}
             {imageUrl ? (
                 <img src={imageUrl} alt={title || company} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -143,7 +123,7 @@ const RequestCard = ({ title, company, location, volume, price, type, bgColor, i
                 </span>
             </div>
         </div>
-        <div className="p-5">
+        <div className="p-5 flex-1 flex flex-col">
             <h3 className="font-bold text-lg text-gray-900 group-hover:text-primary transition-colors">{title || company}</h3>
             <div className="flex items-center gap-1 mt-1 text-gray-500">
                 <MapPin size={14} />
@@ -161,91 +141,34 @@ const RequestCard = ({ title, company, location, volume, price, type, bgColor, i
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
-                <button className="py-2.5 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">
+            <div className="mt-auto pt-6">
+                <Link href={`/listing/${id || ''}`} className="w-full py-2.5 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors flex items-center justify-center">
                     Detail
-                </button>
-                <div className="py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors">
-                    0812-3456-7890
-                </div>
+                </Link>
             </div>
-        </div>
-        <div className="h-24 bg-card-bg mt-2 px-4 py-3 flex flex-col justify-end items-end relative overflow-hidden">
-            {/* Mock Map Preview */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
-                <svg viewBox="0 0 100 100" className="w-full h-full stroke-gray-900 stroke-[0.5] fill-none">
-                    <path d="M0 20 L20 0 M20 40 L40 20 M40 60 L60 40 M60 80 L80 60 M80 100 L100 80" />
-                    <path d="M0 80 L20 100 M20 60 L40 80 M40 40 L60 60 M60 20 L80 40 M80 0 L100 20" />
-                </svg>
-            </div>
-            <button className="bg-white/80 backdrop-blur-sm text-[10px] font-bold px-3 py-1.5 rounded-full border border-gray-200 shadow-sm relative z-10">
-                Lihat Peta
-            </button>
         </div>
     </div>
 );
 
-const Footer = () => (
-    <footer className="bg-bg-soft pt-16 pb-8 border-t border-gray-200 mt-20">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-1">
-                <div className="text-primary font-bold text-2xl mb-6">Eksporin</div>
-                <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
-                    Memberdayakan petani Indonesia melalui teknologi untuk akses pasar yang lebih adil dan transparan.
-                </p>
-                <div className="flex gap-4 mt-8">
-                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-primary cursor-pointer hover:scale-110 transition-transform"><FacebookIcon /></div>
-                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-primary cursor-pointer hover:scale-110 transition-transform"><TwitterIcon /></div>
-                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-primary cursor-pointer hover:scale-110 transition-transform"><InstagramIcon /></div>
-                    <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-primary cursor-pointer hover:scale-110 transition-transform"><LinkedinIcon /></div>
-                </div>
-            </div>
-
-            <div>
-                <h4 className="font-bold text-gray-900 mb-6">Perusahaan</h4>
-                <ul className="flex flex-col gap-4 text-sm text-gray-500">
-                    <li className="hover:text-primary cursor-pointer">Tentang Kami</li>
-                    <li className="hover:text-primary cursor-pointer">Karir</li>
-                    <li className="hover:text-primary cursor-pointer">Kontak</li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 className="font-bold text-gray-900 mb-6">Bantuan</h4>
-                <ul className="flex flex-col gap-4 text-sm text-gray-500">
-                    <li className="hover:text-primary cursor-pointer">Pusat Bantuan</li>
-                    <li className="hover:text-primary cursor-pointer">Panduan Petani</li>
-                    <li className="hover:text-primary cursor-pointer">FAQ</li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 className="font-bold text-gray-900 mb-6">Legal</h4>
-                <ul className="flex flex-col gap-4 text-sm text-gray-500">
-                    <li className="hover:text-primary cursor-pointer">Privasi</li>
-                    <li className="hover:text-primary cursor-pointer">Syarat & Ketentuan</li>
-                </ul>
-            </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-200">
-            <p className="text-xs text-gray-400 text-center">
-                © 2026 Eksporin. Memberdayakan Petani Indonesia.
-            </p>
-        </div>
-    </footer>
-);
 
 export default function HomePage() {
     const [listings, setListings] = React.useState<any[]>([]);
+    const [filteredListings, setFilteredListings] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [availableCommodities, setAvailableCommodities] = React.useState<string[]>([]);
 
     React.useEffect(() => {
         const fetchListings = async () => {
             try {
                 const response = await getListings();
                 // Assumes response is an array or has a data property that is an array
-                setListings(Array.isArray(response) ? response : (response as any)?.data || []);
+                const data = Array.isArray(response) ? response : (response as any)?.data || [];
+                setListings(data);
+                setFilteredListings(data);
+                
+                // Extract unique commodities for the dropdown
+                const uniqueCommodities = Array.from(new Set(data.map((item: any) => item.commodity?.name).filter(Boolean))) as string[];
+                setAvailableCommodities(uniqueCommodities);
             } catch (error) {
                 console.error("Failed to fetch listings:", error);
             } finally {
@@ -255,47 +178,92 @@ export default function HomePage() {
         fetchListings();
     }, []);
 
+    const handleSearch = (locationFilter: string, commodityFilter: string) => {
+        let filtered = [...listings];
+        if (locationFilter && locationFilter.trim() !== "") {
+            filtered = filtered.filter(item => 
+                item.location?.toLowerCase().includes(locationFilter.toLowerCase()) ||
+                item.address?.toLowerCase().includes(locationFilter.toLowerCase())
+            );
+        }
+        if (commodityFilter !== "Semua Komoditas") {
+            filtered = filtered.filter(item => item.commodity?.name === commodityFilter);
+        }
+        setFilteredListings(filtered);
+    };
+
     return (
         <div className="min-h-screen bg-white font-body">
             <Navbar />
 
 
 
-            <main className="max-w-7xl mx-auto px-6">
-                {/* Hero Section */}
-                <section className="relative py-20 flex flex-col items-start min-h-[600px] overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute right-[-100px] top-[-100px] w-[600px] h-[600px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
+            {/* Hero Section Full Width */}
+            <section className="relative isolate pt-20 pb-28 flex flex-col items-center min-h-[550px] overflow-hidden justify-start w-full">
+                    {/* Video Background */}
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover -z-20"
+                    >
+                        <source src="/hero_background.mp4" type="video/mp4" />
+                    </video>
+                    
+                    {/* Overlay to ensure text readability */}
+                    <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] -z-10"></div>
 
-                    <div className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">
-                        Edisi Panen 2024
+                    {/* Content Container */}
+                    <div className="max-w-7xl mx-auto px-6 w-full flex flex-col items-start relative z-10">
+                        <div className="bg-white/80 text-primary px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm border border-white">
+                        Edisi Panen 2026
                     </div>
 
-                    <h1 className="text-6xl font-extrabold text-[#113114] leading-[1.1] max-w-2xl">
+                    <h1 className="text-6xl font-extrabold text-[#113114] leading-[1.1] max-w-2xl drop-shadow-sm">
                         Temukan Permintaan <span className="text-primary">Komoditas</span> Terdekat
                     </h1>
 
-                    <p className="text-gray-500 mt-6 max-w-lg text-lg leading-relaxed">
+                    <p className="text-gray-800 font-medium mt-6 max-w-lg text-lg leading-relaxed drop-shadow-sm">
                         Hubungkan hasil bumi Anda langsung ke pengepul terverifikasi dengan harga pasar terbaik hari ini.
                     </p>
 
-                    <SearchBox />
+                    <div className="w-full">
+                        <SearchBox onSearch={handleSearch} availableCommodities={availableCommodities} />
+                    </div>
+                </div>
+            </section>
+
+            <main className="max-w-7xl mx-auto px-6">
+                {/* Categories Section */}
+                <section className="mt-16 mb-20">
+                    <div className="flex flex-col items-center mb-10 text-center">
+                        <h2 className="text-3xl font-extrabold text-gray-900">Kategori Unggulan</h2>
+                        <p className="text-gray-500 mt-2 max-w-xl">
+                            Eksplorasi komoditas terbaik dari berbagai daerah di Indonesia yang siap untuk pasar global.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {[
+                            { name: "Kopi & Teh", icon: <Coffee size={32} />, color: "bg-amber-50 text-amber-600 border-amber-100" },
+                            { name: "Rempah Nusantara", icon: <Leaf size={32} />, color: "bg-green-50 text-green-600 border-green-100" },
+                            { name: "Hasil Laut", icon: <ShoppingBag size={32} />, color: "bg-blue-50 text-blue-600 border-blue-100" },
+                            { name: "Biji-bijian", icon: <Box size={32} />, color: "bg-orange-50 text-orange-600 border-orange-100" },
+                        ].map((cat, i) => (
+                            <div key={i} className={`flex flex-col items-center justify-center p-8 rounded-3xl border cursor-pointer hover:-translate-y-1 transition-transform ${cat.color}`}>
+                                {cat.icon}
+                                <span className="mt-4 font-bold text-gray-900">{cat.name}</span>
+                            </div>
+                        ))}
+                    </div>
                 </section>
 
                 {/* Latest Requests */}
-                <section className="py-20 mt-10">
+                <section className="py-16 mt-10">
                     <div className="flex items-end justify-between mb-10">
                         <div>
                             <h2 className="text-3xl font-extrabold text-gray-900">Permintaan Terbaru</h2>
                             <p className="text-gray-400 text-sm mt-1">Update terakhir: 5 menit yang lalu</p>
-                        </div>
-                        <div className="flex items-center gap-2 p-1 bg-bg-soft rounded-xl border border-gray-200">
-                            <button className="p-2 bg-white text-gray-900 rounded-lg shadow-sm border border-gray-100">
-                                <LayoutGrid size={18} />
-                            </button>
-                            <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                                <List size={18} />
-                            </button>
                         </div>
                     </div>
 
@@ -304,16 +272,17 @@ export default function HomePage() {
                             <div className="col-span-full flex justify-center py-10">
                                 <p className="text-gray-500">Memuat permintaan...</p>
                             </div>
-                        ) : listings.length > 0 ? (
-                            listings.map((listing: any, index: number) => {
+                        ) : filteredListings.length > 0 ? (
+                            filteredListings.slice(0, 3).map((listing: any, index: number) => {
                                 // Karena UPLOAD_PATH di backend kosong, FileServer membaca dari root folder aplikasi (/app)
                                 // Sedangkan gambar disimpan di /app/storage/uploads/
                                 // Jadi kita harus menambahkan /storage sebelum URL gambarnya
-                                const imageUrl = listing.image_url ? `http://43.157.248.229:8080/uploads/storage${listing.image_url}` : null;
+                                const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
                                 
                                 return (
                                 <RequestCard
                                     key={listing.id || index}
+                                    id={listing.id}
                                     title={listing.title}
                                     company={listing.company_name || "Perusahaan"}
                                     location={listing.location || "Lokasi"}
@@ -321,6 +290,8 @@ export default function HomePage() {
                                     price={`Rp ${listing.price_buy?.toLocaleString('id-ID') || 0}`}
                                     type={listing.commodity?.name || "Komoditas"}
                                     imageUrl={imageUrl}
+                                    latitude={listing.latitude || listing.location_lat}
+                                    longitude={listing.longitude || listing.location_lng}
                                     bgColor={
                                         index % 3 === 0 ? "from-[#4a3721] to-[#6d4c41]" :
                                         index % 3 === 1 ? "from-[#3e2723] to-[#5d4037]" :
@@ -335,12 +306,53 @@ export default function HomePage() {
                         )}
                     </div>
 
+                </section>
 
-                    <div className="flex justify-center mt-16">
-                        <button className="flex items-center gap-2 px-8 py-3.5 bg-bg-soft hover:bg-gray-200 text-gray-900 font-bold rounded-xl transition-all border border-gray-200">
-                            Muat Lebih Banyak
-                            <ChevronDown size={20} />
-                        </button>
+                {/* Impact Stats */}
+                <section className="my-24 bg-[#113114] rounded-[40px] p-12 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+                    
+                    <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/10 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="text-4xl font-extrabold text-white mb-2">50+</div>
+                            <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Negara Tujuan</div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center border-white/10">
+                            <div className="text-4xl font-extrabold text-[#B8E5B3] mb-2">10K+</div>
+                            <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Ton Komoditas</div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center border-white/10">
+                            <div className="text-4xl font-extrabold text-white mb-2">2.5K+</div>
+                            <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Pengepul Aktif</div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center border-white/10">
+                            <div className="text-4xl font-extrabold text-[#B8E5B3] mb-2">99%</div>
+                            <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Tingkat Sukses</div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Call To Action */}
+                <section className="my-24 text-center max-w-3xl mx-auto">
+                    <h2 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                        Siap Mengembangkan Jaringan Ekspor Anda?
+                    </h2>
+                    <p className="text-lg text-gray-500 mt-6 mb-10">
+                        Bergabunglah dengan ribuan pengepul lainnya dan temukan pembeli potensial dari seluruh dunia dengan platform Eksporin.
+                    </p>
+                    <div className="flex items-center justify-center gap-4">
+                        <Link href="/register">
+                            <button className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30 hover:-translate-y-1 active:translate-y-0">
+                                Mulai Sekarang Gratis
+                            </button>
+                        </Link>
+                        <Link href="/explore">
+                            <button className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 hover:-translate-y-1 active:translate-y-0 shadow-sm">
+                                Lihat Pasar
+                                <ArrowRight size={18} />
+                            </button>
+                        </Link>
                     </div>
                 </section>
             </main>

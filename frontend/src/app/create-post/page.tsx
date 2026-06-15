@@ -24,6 +24,11 @@ import { useEffect } from "react";
 import { GetCompany } from "@/features/company/get_company";
 import { GetAllCommodity } from "@/features/commodity/get_all_commodity";
 import { GetProfile } from "@/features/auth/get_profile";
+import dynamic from "next/dynamic";
+import NotificationBell from "@/app/components/NotificationBell";
+
+const MapPicker = dynamic(() => import("./components/Map"), { ssr: false });
+
 
 export default function CreatePostPage() {
     const router = useRouter();
@@ -45,6 +50,8 @@ export default function CreatePostPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{type: "success" | "error" | null, text: string}>({type: null, text: ""});
+    const [showMapModal, setShowMapModal] = useState(false);
+    const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -55,6 +62,12 @@ export default function CreatePostPage() {
                     GetProfile()
                 ]);
                 
+                if (profile && !profile.error) {
+                    const userObj = profile.user || profile;
+                    const savedImage = typeof window !== "undefined" ? localStorage.getItem("profile_picture") : null;
+                    setUserProfileImage(userObj.photo_url || userObj.image || savedImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name || 'User')}&background=random`);
+                }
+
                 if (company && company.error) {
                     if (profile?.is_verified === "pending") {
                         setMessage({ type: "error", text: `Perhatian: Pengajuan perusahaan Anda sedang diproses. Harap tunggu hingga Superadmin menyetujui akun Anda.` });
@@ -173,11 +186,10 @@ export default function CreatePostPage() {
         { name: "Beranda", icon: <Home size={20} />, active: false, href: "/home" },
         { name: "Profil", icon: <User size={20} />, active: false, href: "/profile" },
         { name: "Buat Postingan", icon: <PlusSquare size={20} />, active: true, href: "/create-post" },
-        { name: "Edit Aktif", icon: <Edit3 size={20} />, active: false, href: "/active-posts" },
+        { name: "Daftar Postingan", icon: <Edit3 size={20} />, active: false, href: "/active-posts" },
     ];
 
     const bottomMenuItems = [
-        { name: "Pengaturan", icon: <Settings size={20} />, active: false, href: "#" },
         { name: "Keluar", icon: <LogOut size={20} />, active: false, href: "/login" },
     ];
 
@@ -241,14 +253,6 @@ export default function CreatePostPage() {
                         <p className="text-gray-500 mt-2 font-medium">
                             Kelola stok dan postingan komoditas Anda hari ini.
                         </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-gray-400 hover:text-primary transition-colors">
-                            <Bell size={20} />
-                        </button>
-                        <div className="w-12 h-12 bg-[#B8E5B3] rounded-2xl flex items-center justify-center text-[#237127] shadow-sm overflow-hidden">
-                             <User size={24} />
-                        </div>
                     </div>
                 </header>
 
@@ -367,19 +371,29 @@ export default function CreatePostPage() {
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Lokasi Gudang / Penjemputan</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#237127]">
-                                                <MapPin size={20} />
+                                        <div className="flex gap-3">
+                                            <div className="relative group flex-1">
+                                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#237127]">
+                                                    <MapPin size={20} />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Kecamatan, Kabupaten"
+                                                    value={formData.address}
+                                                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                                                    required
+                                                    disabled={isLoading}
+                                                    className="w-full bg-gray-200/50 border border-transparent rounded-[24px] py-4 pl-14 pr-6 text-sm font-bold text-gray-700 focus:outline-none focus:bg-white focus:border-primary/30 transition-all disabled:opacity-50"
+                                                />
                                             </div>
-                                            <input
-                                                type="text"
-                                                placeholder="Kecamatan, Kabupaten"
-                                                value={formData.address}
-                                                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                                                required
-                                                disabled={isLoading}
-                                                className="w-full bg-gray-200/50 border border-transparent rounded-[24px] py-4 pl-14 pr-6 text-sm font-bold text-gray-700 focus:outline-none focus:bg-white focus:border-primary/30 transition-all disabled:opacity-50"
-                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowMapModal(true)}
+                                                className="bg-[#237127] hover:bg-[#1b5e1e] text-white px-6 rounded-[24px] font-bold flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+                                            >
+                                                <MapPin size={18} />
+                                                Peta
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -432,64 +446,38 @@ export default function CreatePostPage() {
                         </div>
                     </div>
 
-                    {/* Sidebar Stats */}
-                    <div className="w-full lg:w-80 space-y-6">
-                        {/* Storage Capacity Card */}
-                        <div className="bg-[#114B1F] rounded-[32px] p-8 text-white relative overflow-hidden">
-                            <div className="relative z-10">
-                                <h4 className="text-xs font-bold text-white/60 uppercase tracking-widest mb-4">Kapasitas Gudang Terpakai</h4>
-                                <div className="text-5xl font-extrabold mb-6 tracking-tight">84.5%</div>
-                                
-                                <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden mb-4">
-                                    <div className="w-[84.5%] h-full bg-white rounded-full"></div>
-                                </div>
-                                
-                                <p className="text-[11px] text-white/50 font-medium">
-                                    15.5 Ton tersisa dari total 100 Ton
-                                </p>
-                            </div>
-                            
-                            {/* Decorative Icon */}
-                            <div className="absolute bottom-[-20px] right-[-20px] opacity-10">
-                                <Home size={140} strokeWidth={1} />
-                            </div>
+
+                </div>
+            </main>
+
+            {/* Map Modal */}
+            {showMapModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] p-6 w-full max-w-3xl h-[80vh] shadow-2xl border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <MapPin className="text-[#237127]" size={24} />
+                                Pilih Lokasi dari Peta
+                            </h3>
+                            <button 
+                                onClick={() => setShowMapModal(false)}
+                                className="text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
                         </div>
-
-                        {/* Active Summary Card */}
-                        <div className="bg-[#EBEEE8] rounded-[32px] p-8 border border-gray-100">
-                            <h4 className="text-sm font-extrabold text-gray-900 mb-6">Ringkasan Aktif</h4>
-                            
-                            <div className="space-y-4">
-                                <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                                    <div className="w-10 h-10 bg-[#B8E5B3] rounded-xl flex items-center justify-center text-[#237127]">
-                                        <Leaf size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <h5 className="text-xs font-extrabold text-gray-900">Padi Ciherang</h5>
-                                            <span className="text-[9px] font-bold px-2 py-0.5 bg-[#E6F4E8] text-[#237127] rounded-md uppercase tracking-tighter">Aktif</span>
-                                        </div>
-                                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">5.0 Ton</p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                                    <div className="w-10 h-10 bg-[#FFEED9] rounded-xl flex items-center justify-center text-[#E69138]">
-                                        <PlusSquare size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <h5 className="text-xs font-extrabold text-gray-900">Jagung Pipil</h5>
-                                            <span className="text-[9px] font-bold px-2 py-0.5 bg-[#FFF3E0] text-[#E69138] rounded-md uppercase tracking-tighter">Diproses</span>
-                                        </div>
-                                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">12.2 Ton</p>
-                                    </div>
-                                </div>
-                            </div>
+                        
+                        <div className="flex-1 overflow-hidden">
+                            <MapPicker 
+                                onLocationSelect={(address) => {
+                                    setFormData(prev => ({...prev, address}));
+                                }} 
+                                onClose={() => setShowMapModal(false)} 
+                            />
                         </div>
                     </div>
                 </div>
-            </main>
+            )}
         </div>
     );
 }
