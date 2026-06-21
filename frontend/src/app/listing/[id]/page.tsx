@@ -26,6 +26,7 @@ export default function ListingDetailPage() {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [userCompany, setUserCompany] = useState<any>(null);
     const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
+    const [publicProfile, setPublicProfile] = useState<any>(null);
 
     useEffect(() => {
         const fetchListing = async () => {
@@ -34,6 +35,12 @@ export default function ListingDetailPage() {
                 const data = Array.isArray(response) ? response : (response as any)?.data || [];
                 const found = data.find((item: any) => item.id === id);
                 setListing(found);
+
+                if (found?.user_id) {
+                    const { GetPublicProfile } = await import('@/features/auth/get_public_profile');
+                    const profile = await GetPublicProfile(found.user_id);
+                    if (profile) setPublicProfile(profile);
+                }
             } catch (error) {
                 console.error("Failed to fetch listing:", error);
             } finally {
@@ -126,10 +133,20 @@ export default function ListingDetailPage() {
                             <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-100">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
-                                        <img src={userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(listing.user?.name || userProfile?.name || 'User')}&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+                                        <img 
+                                            src={
+                                                (listing.user?.user_image || publicProfile?.user_image)
+                                                    ? ((listing.user?.user_image || publicProfile?.user_image).startsWith('http') 
+                                                        ? (listing.user?.user_image || publicProfile?.user_image) 
+                                                        : `${BASE_URL}${(listing.user?.user_image || publicProfile?.user_image).startsWith('/') ? '' : '/'}${listing.user?.user_image || publicProfile?.user_image}`)
+                                                    : `https://avatar.vercel.sh/${listing.company_name || listing.company?.name || listing.user?.name || publicProfile?.name || listing.id}?size=40`
+                                            } 
+                                            alt="Avatar Pengepul" 
+                                            className="w-full h-full object-cover" 
+                                        />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-900 text-base">{listing.company_name || listing.company?.name || userCompany?.company_name || "Perusahaan Tidak Diketahui"}</h3>
+                                        <h3 className="font-bold text-gray-900 text-base">{listing.company_name || listing.company?.name || listing.user?.name || publicProfile?.name || "Pengepul Anonim"}</h3>
                                         <div className="flex items-center gap-1.5 text-gray-500 text-xs mt-0.5">
                                             <CheckCircle2 size={12} className="text-primary" />
                                             <span className="font-medium">Pengepul Terverifikasi • {listing.location || "Lokasi tidak tersedia"}</span>

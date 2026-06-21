@@ -16,7 +16,8 @@ import {
     Leaf,
     ShoppingBag,
     Box,
-    ArrowRight
+    ArrowRight,
+    AlertCircle
 } from "lucide-react";
 import { getListings } from "@/features/listing/get_all_listing";
 import { BASE_URL } from "@/features/global/url";
@@ -24,6 +25,8 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import dynamic from "next/dynamic";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { GetProfile } from "@/features/auth/get_profile";
+import { useRouter } from "next/navigation";
 
 const MiniMap = dynamic(() => import("./components/MiniMap"), {
     ssr: false,
@@ -54,7 +57,7 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
                     }
                 },
                 (err) => {
-                    console.error("Geolocation failed", err);
+                    // Silently fail if geolocation is denied or unavailable
                     setIsLocating(false);
                 },
                 { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
@@ -156,8 +159,23 @@ export default function HomePage() {
     const [filteredListings, setFilteredListings] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [availableCommodities, setAvailableCommodities] = React.useState<string[]>([]);
+    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const [showLoginAlert, setShowLoginAlert] = React.useState(false);
+    const router = useRouter();
 
     React.useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const profile = await GetProfile();
+                if (profile && !profile.error && profile.id) {
+                    setIsLoggedIn(true);
+                }
+            } catch (err) {
+                // Not logged in
+            }
+        };
+        checkAuth();
+
         const fetchListings = async () => {
             try {
                 const response = await getListings();
@@ -342,11 +360,19 @@ export default function HomePage() {
                         Bergabunglah dengan ribuan pengepul lainnya dan temukan pembeli potensial dari seluruh dunia dengan platform Eksporin.
                     </p>
                     <div className="flex items-center justify-center gap-4">
-                        <Link href="/register">
-                            <button className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30 hover:-translate-y-1 active:translate-y-0">
-                                Mulai Sekarang Gratis
-                            </button>
-                        </Link>
+                        <button 
+                            onClick={(e) => {
+                                if (isLoggedIn) {
+                                    e.preventDefault();
+                                    setShowLoginAlert(true);
+                                } else {
+                                    router.push("/register");
+                                }
+                            }}
+                            className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30 hover:-translate-y-1 active:translate-y-0"
+                        >
+                            Mulai Sekarang Gratis
+                        </button>
                         <Link href="/explore">
                             <button className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 hover:-translate-y-1 active:translate-y-0 shadow-sm">
                                 Lihat Pasar
@@ -359,13 +385,28 @@ export default function HomePage() {
 
             <Footer />
 
-            {/* Floating Action Button */}
-            <div className="fixed bottom-10 right-10 z-50">
-                <button className="bg-primary hover:bg-primary-dark text-white p-5 rounded-3xl shadow-2xl transition-all hover:scale-110 active:scale-95 group">
-                    <MessageSquare size={30} fill="currentColor" className="group-hover:rotate-12 transition-transform" />
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
-                </button>
-            </div>
+            {/* Custom Alert Modal */}
+            {showLoginAlert && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+                        <div className="p-8 text-center flex flex-col items-center">
+                            <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+                                <AlertCircle size={40} strokeWidth={2} />
+                            </div>
+                            <h3 className="text-2xl font-extrabold text-gray-900 mb-3">Akses Ditolak</h3>
+                            <p className="text-gray-500 font-medium mb-8 leading-relaxed">
+                                Anda sudah melakukan login dan daftar di sistem kami.
+                            </p>
+                            <button 
+                                onClick={() => setShowLoginAlert(false)}
+                                className="w-full py-3.5 rounded-2xl bg-gray-900 text-white font-bold hover:bg-black transition-colors shadow-lg shadow-black/10"
+                            >
+                                Mengerti
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -90,7 +90,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\" : \"Fiko\",\n    \"email\": \"fikop@gmail.com\",\n    \"password\" : \"asdfasdf\"\n}",
+							"raw": "{\n    \"name\" : \"Fiko\",\n    \"email\": \"fikop@gmail.com\",\n    \"password\" : \"asdfasdf\",\n    \"user_image\" : \"/uploads/0b1fff9d-48a9-424d-80d6-1d52bfe24dc0.jpg\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -160,6 +160,28 @@
 							"raw": "{\n    \"name\" : \"Bagasht\",\n    \"email\": \"bagas199s8gmail.com\",\n    \"password\" : \"asdfasdf\"\n}"
 						},
 						"url": "{{BASE_URL}}/api/logout"
+					},
+					"response": []
+				},
+				{
+					"name": "Update profile Image",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/home/bagas/Downloads/pbw.jpeg"
+								}
+							]
+						},
+						"url": "{{BASE_URL}}/api/profile/upload"
 					},
 					"response": []
 				}
