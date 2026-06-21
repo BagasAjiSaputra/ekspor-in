@@ -158,10 +158,16 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
 
 const RequestCard = ({ id, title, company, location, volume, price, type, bgColor, imageUrl, latitude, longitude }: any) => (
     <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
-        <div className="relative h-48 bg-gray-200 shrink-0">
+        <div className="relative h-48 bg-gray-200 shrink-0 overflow-hidden">
             {/* Image Display */}
             {imageUrl ? (
-                <img src={imageUrl} alt={title || company} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <Image 
+                    src={imageUrl} 
+                    alt={title || company} 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
             ) : (
                 <div className={`absolute inset-0 bg-gradient-to-br ${bgColor} opacity-60 group-hover:scale-105 transition-transform duration-500`}></div>
             )}
