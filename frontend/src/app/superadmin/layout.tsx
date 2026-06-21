@@ -87,13 +87,7 @@ export default function SuperadminLayout({
         </nav>
 
         <div className="p-4 border-t border-gray-200 space-y-1">
-          <Link
-            href="#"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            <Settings className="mr-3 h-5 w-5 text-gray-400" />
-            Pengaturan
-          </Link>
+
           <form action={Logout}>
             <button
               type="submit"

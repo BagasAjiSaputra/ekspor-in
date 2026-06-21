@@ -17,8 +17,10 @@ import {
     Save,
     X,
     Building2,
-    Loader2
+    Loader2,
+    MapPin
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { authService } from "@/services/auth";
 import { GetProfile } from "@/features/auth/get_profile";
 import { UpdateProfile } from "@/features/auth/update_profile";
@@ -28,6 +30,8 @@ import { Logout } from "@/features/auth/logout";
 import { BASE_URL } from "@/features/global/url";
 import { GetCompany } from "@/features/company/get_company";
 import { UpdateCompany } from "@/features/company/update_company";
+
+const MapPicker = dynamic(() => import("@/app/create-post/components/Map"), { ssr: false });
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -47,6 +51,7 @@ export default function ProfilePage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
     const [isApplying, setIsApplying] = useState(false);
+    const [showMapModal, setShowMapModal] = useState(false);
 
     const handleLogout = async () => {
         try {
@@ -393,13 +398,28 @@ export default function ProfilePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alamat Gudang Utama</label>
-                                <textarea
-                                    rows={3}
-                                    value={companyFormData.address}
-                                    onChange={(e) => setCompanyFormData({ ...companyFormData, address: e.target.value })}
-                                    disabled={isUpdatingCompany}
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body disabled:opacity-50"
-                                ></textarea>
+                                <div className="flex gap-3 items-start">
+                                    <div className="relative group flex-1">
+                                        <div className="absolute left-4 top-3.5 text-[#237127]">
+                                            <MapPin size={20} />
+                                        </div>
+                                        <textarea
+                                            rows={3}
+                                            value={companyFormData.address}
+                                            onChange={(e) => setCompanyFormData({ ...companyFormData, address: e.target.value })}
+                                            disabled={isUpdatingCompany}
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all resize-none font-body disabled:opacity-50"
+                                        ></textarea>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMapModal(true)}
+                                        className="bg-[#237127] hover:bg-[#1b5e1e] text-white px-5 rounded-2xl font-bold flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap py-3.5"
+                                    >
+                                        <MapPin size={18} />
+                                        Peta
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -634,6 +654,34 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </main>
+            {/* Map Modal */}
+            {showMapModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] p-6 w-full max-w-3xl h-[80vh] shadow-2xl border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <MapPin className="text-[#237127]" size={24} />
+                                Pilih Lokasi dari Peta
+                            </h3>
+                            <button 
+                                onClick={() => setShowMapModal(false)}
+                                className="text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-hidden">
+                            <MapPicker 
+                                onLocationSelect={(address) => {
+                                    setCompanyFormData(prev => ({...prev, address}));
+                                }} 
+                                onClose={() => setShowMapModal(false)} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

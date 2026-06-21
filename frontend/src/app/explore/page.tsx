@@ -13,7 +13,8 @@ import {
     Check,
     ChevronLeft,
     ChevronRight,
-    SearchIcon
+    SearchIcon,
+    X
 } from "lucide-react";
 import { getListings } from "@/features/listing/get_all_listing";
 import { BASE_URL } from "@/features/global/url";
@@ -158,10 +159,24 @@ export default function ExplorePage() {
     const [isLoading, setIsLoading] = React.useState(true);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [activeSearch, setActiveSearch] = React.useState("");
+    const [urlLocFilter, setUrlLocFilter] = React.useState("");
+    const [urlComFilter, setUrlComFilter] = React.useState("");
     const [currentPage, setCurrentPage] = React.useState(1);
     const ITEMS_PER_PAGE = 6;
 
     React.useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const loc = params.get('loc');
+            const com = params.get('com');
+            if (loc) setUrlLocFilter(loc);
+            if (com) setUrlComFilter(com);
+            
+            // Clean URL after capturing params so it looks neat
+            if (loc || com) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        }
         const fetchListings = async () => {
             try {
                 const response = await getListings();
@@ -189,6 +204,13 @@ export default function ExplorePage() {
         fetchListings();
     }, []);
 
+    const filteredListings = listings.filter((l: any) => {
+        if (urlLocFilter && !(l.location?.toLowerCase().includes(urlLocFilter.toLowerCase()) || l.address?.toLowerCase().includes(urlLocFilter.toLowerCase()))) return false;
+        if (urlComFilter && l.commodity?.name !== urlComFilter) return false;
+        if (activeSearch && !(l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase()))) return false;
+        return true;
+    });
+
     return (
         <div className="min-h-screen bg-bg-soft font-body">
             <Navbar />
@@ -199,7 +221,24 @@ export default function ExplorePage() {
                     <div className="w-full">
                         <div className="mb-8">
                             <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">Pasar Komoditas</h1>
-                            <p className="text-gray-500 text-sm mt-2">Menampilkan <span className="text-primary font-bold">{isLoading ? "..." : (listings.filter((l: any) => !activeSearch || l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase())).length)} hasil</span> {activeSearch ? `untuk "${activeSearch}"` : "keseluruhan"}</p>
+                            <p className="text-gray-500 text-sm mt-2">Menampilkan <span className="text-primary font-bold">{isLoading ? "..." : filteredListings.length} hasil</span> {activeSearch ? `untuk "${activeSearch}"` : (urlComFilter || urlLocFilter ? "dari filter terpilih" : "keseluruhan")}</p>
+                            
+                            {(urlLocFilter || urlComFilter) && (
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    {urlComFilter && (
+                                        <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border border-primary/20">
+                                            {urlComFilter}
+                                            <button onClick={() => setUrlComFilter("")} className="hover:bg-primary/20 p-0.5 rounded-full transition-colors"><X size={14}/></button>
+                                        </span>
+                                    )}
+                                    {urlLocFilter && (
+                                        <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border border-primary/20">
+                                            <MapPin size={12}/> {urlLocFilter}
+                                            <button onClick={() => setUrlLocFilter("")} className="hover:bg-primary/20 p-0.5 rounded-full transition-colors"><X size={14}/></button>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         
                         <div className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6">
@@ -237,12 +276,10 @@ export default function ExplorePage() {
                                 </div>
                             ) : listings.length > 0 ? (
                                 (() => {
-                                    const filteredListings = listings.filter((l: any) => !activeSearch || l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase()));
-                                    
                                     if (filteredListings.length === 0) {
                                         return (
                                             <div className="col-span-full flex justify-center py-10">
-                                                <p className="text-gray-500">Tidak ada barang yang cocok dengan pencarian "{activeSearch}".</p>
+                                                <p className="text-gray-500">Tidak ada barang yang cocok dengan filter pencarian.</p>
                                             </div>
                                         );
                                     }

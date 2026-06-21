@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -27,6 +28,9 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { GetProfile } from "@/features/auth/get_profile";
 import { useRouter } from "next/navigation";
+import { GetAllCommodity } from "@/features/commodity/get_all_commodity";
+
+const MapPicker = dynamic(() => import("@/app/create-post/components/Map"), { ssr: false });
 
 const MiniMap = dynamic(() => import("./components/MiniMap"), {
     ssr: false,
@@ -37,6 +41,7 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
     const [location, setLocation] = React.useState("");
     const [commodity, setCommodity] = React.useState("Semua Komoditas");
     const [isLocating, setIsLocating] = React.useState(false);
+    const [showMapModal, setShowMapModal] = React.useState(false);
 
     React.useEffect(() => {
         if ("geolocation" in navigator) {
@@ -88,15 +93,25 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
                         Lokasi {isLocating && <span className="text-primary normal-case font-normal">(Melacak...)</span>}
                     </label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            placeholder="Provinsi/Kab/Kec"
-                            className="w-full bg-white border border-gray-200 rounded-xl px-10 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        />
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={18} />
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <input
+                                type="text"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                placeholder="Provinsi/Kab/Kec"
+                                className="w-full bg-white border border-gray-200 rounded-xl px-10 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                            />
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-primary" size={18} />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowMapModal(true)}
+                            className="bg-[#237127] hover:bg-[#1b5e1e] text-white px-4 rounded-xl font-bold flex items-center justify-center transition-colors shrink-0 shadow-sm"
+                            title="Pilih dari Peta"
+                        >
+                            <MapPin size={18} />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -107,6 +122,36 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
                 <Search size={20} />
                 Cari Permintaan Sekarang
             </button>
+
+            {/* Map Modal */}
+            {showMapModal && typeof window !== "undefined" && createPortal(
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] p-6 w-full max-w-3xl h-[80vh] shadow-2xl border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200 text-left">
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <MapPin className="text-[#237127]" size={24} />
+                                Pilih Lokasi dari Peta
+                            </h3>
+                            <button 
+                                onClick={() => setShowMapModal(false)}
+                                className="text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-hidden">
+                            <MapPicker 
+                                onLocationSelect={(address) => {
+                                    setLocation(address);
+                                }} 
+                                onClose={() => setShowMapModal(false)} 
+                            />
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
@@ -178,15 +223,31 @@ export default function HomePage() {
 
         const fetchListings = async () => {
             try {
+                let uniqueCommodities: string[] = [];
+                // Fetch commodities dari superadmin
+                try {
+                    const commRes = await GetAllCommodity();
+                    if (commRes && !commRes.error) {
+                        uniqueCommodities = Array.from(new Set(commRes.map((c: any) => c.name).filter(Boolean))) as string[];
+                        setAvailableCommodities(uniqueCommodities);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch commodities", e);
+                }
+
                 const response = await getListings();
                 // Assumes response is an array or has a data property that is an array
                 const data = Array.isArray(response) ? response : (response as any)?.data || [];
+                
+                // Fallback: Jika tidak bisa fetch dari GetAllCommodity (misal karena belum login / 401),
+                // maka ambil list komoditas dari data listing yang tersedia.
+                if (uniqueCommodities.length === 0 && data.length > 0) {
+                    const activeCommodities = Array.from(new Set(data.map((l: any) => l.commodity?.name).filter(Boolean))) as string[];
+                    setAvailableCommodities(activeCommodities);
+                }
+                
                 setListings(data);
                 setFilteredListings(data);
-                
-                // Extract unique commodities for the dropdown
-                const uniqueCommodities = Array.from(new Set(data.map((item: any) => item.commodity?.name).filter(Boolean))) as string[];
-                setAvailableCommodities(uniqueCommodities);
             } catch (error) {
                 console.error("Failed to fetch listings:", error);
             } finally {
@@ -197,17 +258,14 @@ export default function HomePage() {
     }, []);
 
     const handleSearch = (locationFilter: string, commodityFilter: string) => {
-        let filtered = [...listings];
+        const params = new URLSearchParams();
         if (locationFilter && locationFilter.trim() !== "") {
-            filtered = filtered.filter(item => 
-                item.location?.toLowerCase().includes(locationFilter.toLowerCase()) ||
-                item.address?.toLowerCase().includes(locationFilter.toLowerCase())
-            );
+            params.append("loc", locationFilter.trim());
         }
-        if (commodityFilter !== "Semua Komoditas") {
-            filtered = filtered.filter(item => item.commodity?.name === commodityFilter);
+        if (commodityFilter && commodityFilter !== "Semua Komoditas") {
+            params.append("com", commodityFilter);
         }
-        setFilteredListings(filtered);
+        router.push(`/explore?${params.toString()}`);
     };
 
     return (
