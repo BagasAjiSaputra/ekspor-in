@@ -2,6 +2,7 @@ package routers
 
 import (
 	"eksporin/modules/features/admin"
+	"eksporin/modules/features/announcement"
 	"eksporin/modules/features/commodity"
 	"eksporin/modules/features/company"
 	"eksporin/modules/features/listing"
@@ -28,6 +29,7 @@ func Router() {
 	publicMux.HandleFunc("/token-reset", users.SendTokenResetHandler)
 	publicMux.HandleFunc("/reset-password", users.ResetPasswordHandler)
 	publicMux.HandleFunc("/listing", listing.GetAllListingHandler)
+	publicMux.HandleFunc("/announcement", announcement.GetActiveAnnouncementsHandler)
 
 	// PROTECTED
 	protectedMux.HandleFunc("/profile", users.ProfileRouter)
@@ -40,6 +42,8 @@ func Router() {
 	protectedMux.HandleFunc("/commodity", commodity.CommodityRouter)
 	protectedMux.HandleFunc("/users", admin.AdminRouter)
 	protectedMux.HandleFunc("/approve", admin.AdminVerifyUser)
+	protectedMux.HandleFunc("/announcement", announcement.AnnouncementRouter)
+	protectedMux.HandleFunc("/ban", admin.BanRouter)
 
 	root.Handle("/", middleware.Logger(publicMux))
 

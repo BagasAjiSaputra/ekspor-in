@@ -78,11 +78,80 @@ func GetAllUserHandler(w http.ResponseWriter, r *http.Request) {
 			Role:       string(user.Role),
 			IsVerified: string(user.IsVerified),
 			IsRejected: user.IsRejected,
+			IsBanned:   user.IsBanned,
 			CreatedAt:  user.CreatedAt,
 			ResetToken: user.ResetToken,
 			ResetExp:   user.ResetExp,
 		})
 	}
 
+	json.NewEncoder(w).Encode(response)
+}
+
+func BanUserHandler(w http.ResponseWriter, r *http.Request) {
+	role, ok := r.Context().Value(middleware.UserRole).(string)
+
+	if !ok || role != "admin" {
+		utils.Error(w, "Forbidden Admin Only", http.StatusForbidden)
+		return
+	}
+
+	var req BanRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
+		return
+	}
+
+	user, err := BanUserService(req.UserID)
+
+	if err != nil {
+		utils.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response := BanResponse{
+		Message:  "User Berhasil Dibanned",
+		UserID:   user.ID,
+		IsBanned: user.IsBanned,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func UnbanUserHandler(w http.ResponseWriter, r *http.Request) {
+	role, ok := r.Context().Value(middleware.UserRole).(string)
+
+	if !ok || role != "admin" {
+		utils.Error(w, "Forbidden Admin Only", http.StatusForbidden)
+		return
+	}
+
+	var req BanRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		utils.Error(w, "Invalid Request", http.StatusBadRequest)
+		return
+	}
+
+	user, err := UnbanUserService(req.UserID)
+
+	if err != nil {
+		utils.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	response := BanResponse{
+		Message:  "User Berhasil Diunbanned",
+		UserID:   user.ID,
+		IsBanned: user.IsBanned,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }

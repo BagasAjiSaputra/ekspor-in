@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Eye, Trash2, Ban, Search, Loader2 } from "lucide-react";
+import { Eye, Trash2, Ban, Search, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BASE_URL } from "@/features/global/url";
+import { DeleteListingAction } from "@/features/listing/delete_listing";
 
 interface Listing {
   id: string;
@@ -25,6 +26,39 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "success" | "error">("idle");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteClick = (id: string) => {
+    setListingToDelete(id);
+    setDeleteStatus("idle");
+    setDeleteError(null);
+  };
+
+  const executeDelete = async () => {
+    if (!listingToDelete) return;
+    
+    setIsDeleting(true);
+    setDeleteStatus("idle");
+    setDeleteError(null);
+    const res = await DeleteListingAction(listingToDelete);
+    setIsDeleting(false);
+    
+    if (res.success) {
+      setDeleteStatus("success");
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setListingToDelete(null);
+        setDeleteStatus("idle");
+        router.refresh();
+      }, 1500);
+    } else {
+      setDeleteStatus("error");
+      setDeleteError(res.message || "Gagal menghapus postingan");
+    }
+  };
 
   const filteredListings = initialListings.filter((listing) => 
     listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,7 +120,7 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
                       <div className="flex items-center gap-3">
                         {item.image_url ? (
                           <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden relative border border-gray-200">
-                            <img src={`${BASE_URL}/uploads/storage${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} alt={item.title} className="object-cover w-full h-full" />
+                            <img src={`${BASE_URL}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} alt={item.title} className="object-cover w-full h-full" />
                           </div>
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center border border-green-100 text-green-600 font-bold text-xs">
@@ -116,7 +150,9 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
                           <Eye size={16} />
                         </button>
                         <button
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() => handleDeleteClick(item.id)}
+                          disabled={isDeleting}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                           title="Hapus / Ban Postingan"
                         >
                           <Ban size={16} />
@@ -150,7 +186,7 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
             <div className="space-y-6">
               {selectedListing.image_url && (
                 <div className="w-full h-48 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200">
-                  <img src={`${BASE_URL}/uploads/storage${selectedListing.image_url.startsWith('/') ? '' : '/'}${selectedListing.image_url}`} alt="Foto Komoditas" className="object-cover w-full h-full" />
+                  <img src={`${BASE_URL}${selectedListing.image_url.startsWith('/') ? '' : '/'}${selectedListing.image_url}`} alt="Foto Komoditas" className="object-cover w-full h-full" />
                 </div>
               )}
 
@@ -189,11 +225,75 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
                 </button>
                 <button
                   type="button"
-                  className="flex-1 px-4 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                  onClick={() => handleDeleteClick(selectedListing.id)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Ban size={16} /> Banned Post
+                  <Ban size={16} /> 
+                  Banned Post
                 </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Hapus */}
+      {listingToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-sm shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-200 text-center">
+            
+            {deleteStatus === "success" ? (
+              <div className="py-6 animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 size={40} className="animate-bounce" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 font-plus-jakarta-sans mb-2">
+                  Berhasil!
+                </h3>
+                <p className="text-gray-500 font-medium">Postingan telah berhasil dihapus.</p>
+              </div>
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Ban size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 font-plus-jakarta-sans mb-2">
+                  Hapus Postingan?
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Tindakan ini tidak dapat dibatalkan. Postingan akan dihapus secara permanen dari sistem.
+                </p>
+
+                {deleteStatus === "error" && deleteError && (
+                  <div className="mb-6 p-3 text-sm font-semibold bg-red-50 text-red-600 border border-red-100 rounded-xl text-left">
+                    Gagal: {deleteError}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setListingToDelete(null);
+                      setDeleteStatus("idle");
+                    }}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={executeDelete}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-bold text-sm rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-red-600/20"
+                  >
+                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : "Ya, Hapus"}
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       )}

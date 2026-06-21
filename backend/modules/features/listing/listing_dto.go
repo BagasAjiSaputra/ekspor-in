@@ -53,6 +53,15 @@ type UpdateListingResponse struct {
 	Message string `json:"message"`
 }
 
+type DeleteListingRequest struct {
+	ID uuid.UUID `json:"id"`
+}
+
+type DeleteListingResponse struct {
+	Message string `json:"message"`
+	Title   string `json:"title"`
+}
+
 type AllListingData struct {
 	ID          uuid.UUID `json:"id"`
 	UserID      uuid.UUID `json:"user_id"`

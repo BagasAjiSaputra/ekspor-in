@@ -30,6 +30,7 @@ type User struct {
 	Role		UserRole	`gorm:"type:user_role;default:'user'"`
 	IsVerified	Verify		`gorm:"type:verify;default:'none'"`
 	IsRejected	bool		`gorm:"default:false;"`
+	IsBanned	bool		`gorm:"default:false;"`
 	CreatedAt	time.Time	`gorm:"autoCreateTime"`
 	ResetToken	*string		`gorm:"unique;default:null"`
 	ResetExp	*time.Time	`gorm:"default:null"`

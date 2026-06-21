@@ -55,3 +55,43 @@ func GetUsersByRoleService(role string) ([]models.User, error) {
 
 	return users, nil
 }
+
+func BanUserService(userID uuid.UUID) (*models.User, error) {
+	user, err := FindByID(userID)
+
+	if err != nil {
+		return nil, errors.New("User Tidak Ditemukan")
+	}
+
+	if user.Role == models.RoleAdmin {
+		return nil, errors.New("Tidak bisa ban admin")
+	}
+
+	user.IsBanned = true
+
+	err = UpdateUser(user)
+
+	if err != nil {
+		return nil, errors.New("Gagal ban user")
+	}
+
+	return user, nil
+}
+
+func UnbanUserService(userID uuid.UUID) (*models.User, error) {
+	user, err := FindByID(userID)
+
+	if err != nil {
+		return nil, errors.New("User Tidak Ditemukan")
+	}
+
+	user.IsBanned = false
+
+	err = UpdateUser(user)
+
+	if err != nil {
+		return nil, errors.New("Gagal unban user")
+	}
+
+	return user, nil
+}

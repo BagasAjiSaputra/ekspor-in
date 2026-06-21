@@ -32,6 +32,8 @@ export async function GetAllUsers(): Promise<UserData[]> {
     })
 
     if (!res.ok) {
+      const errText = await res.text()
+      console.error(`GetAllUsers API Error: ${res.status} ${errText}`)
       throw new Error("Gagal mengambil data user")
     }
 
@@ -45,8 +47,8 @@ export async function GetAllUsers(): Promise<UserData[]> {
     }
     
     return []
-  } catch (err) {
-    console.error("GetAllUsers Error:", err)
+  } catch (err: any) {
+    console.error("GetAllUsers Error:", err.message)
     return []
   }
 }

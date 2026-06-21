@@ -1,20 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import { Edit2, Trash2, Plus, Loader2 } from "lucide-react";
+import { Edit2, Trash2, Plus, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CreateCommodity, UpdateCommodity, DeleteCommodity } from "@/features/commodity/manage_commodity";
 
-interface Commodity {
+export interface Commodity {
   id: string;
   name: string;
   category: string;
+  usageCount?: number;
 }
 
 export function CommodityTable({ initialCommodities }: { initialCommodities: Commodity[] }) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [selectedCommodity, setSelectedCommodity] = useState<Commodity | null>(null);
   
   const [formData, setFormData] = useState({ name: "", category: "Pertanian" });
@@ -35,7 +37,16 @@ export function CommodityTable({ initialCommodities }: { initialCommodities: Com
 
   const handleOpenDeleteModal = (commodity: Commodity) => {
     setSelectedCommodity(commodity);
+    setError(null);
+    setDeleteSuccess(false);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedCommodity(null);
+    setError(null);
+    setDeleteSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,10 +83,13 @@ export function CommodityTable({ initialCommodities }: { initialCommodities: Com
     try {
       const res = await DeleteCommodity(selectedCommodity.id);
       if (res.success) {
-        setIsDeleteModalOpen(false);
-        router.refresh();
+        setDeleteSuccess(true);
+        setTimeout(() => {
+          handleCloseDeleteModal();
+          router.refresh();
+        }, 1500);
       } else {
-        setError(res.message || "Gagal menghapus komoditas.");
+        setError(`Gagal: ${res.message}`);
       }
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan.");
@@ -104,13 +118,14 @@ export function CommodityTable({ initialCommodities }: { initialCommodities: Com
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">No</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Komoditas</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Digunakan Oleh</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {initialCommodities.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">
                     Belum ada data komoditas.
                   </td>
                 </tr>
@@ -124,6 +139,11 @@ export function CommodityTable({ initialCommodities }: { initialCommodities: Com
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
                         {item.category || "Pertanian"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                        {item.usageCount || 0} Postingan
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -222,40 +242,54 @@ export function CommodityTable({ initialCommodities }: { initialCommodities: Com
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl border border-gray-100 animate-in fade-in zoom-in duration-200 text-center">
-            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={24} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2 font-plus-jakarta-sans">
-              Hapus Komoditas?
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Apakah Anda yakin ingin menghapus <strong>{selectedCommodity?.name}</strong>? Data yang sudah dihapus tidak dapat dikembalikan.
-            </p>
             
-            {error && (
-              <div className="mb-4 p-3 text-xs font-semibold bg-red-50 text-red-600 border border-red-100 rounded-xl text-left">
-                {error}
+            {deleteSuccess ? (
+              <div className="py-6 animate-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 size={40} className="animate-bounce" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 font-plus-jakarta-sans mb-2">
+                  Berhasil!
+                </h3>
+                <p className="text-gray-500 font-medium">Komoditas telah berhasil dihapus.</p>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 font-plus-jakarta-sans">
+                  Hapus Komoditas?
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Tindakan ini tidak dapat dibatalkan. Komoditas <span className="font-bold text-gray-700">{selectedCommodity?.name}</span> akan dihapus dari sistem.
+                </p>
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsDeleteModalOpen(false)}
-                disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 font-semibold text-sm rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                {isLoading && <Loader2 size={16} className="animate-spin" />}
-                Hapus
-              </button>
-            </div>
+                {error && (
+                  <div className="mb-6 p-3 text-sm font-semibold bg-red-50 text-red-600 border border-red-100 rounded-xl text-left">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCloseDeleteModal}
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold text-sm rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md shadow-red-600/20"
+                  >
+                    {isLoading && <Loader2 size={16} className="animate-spin" />}
+                    Ya, Hapus
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

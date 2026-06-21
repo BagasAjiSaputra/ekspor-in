@@ -12,6 +12,7 @@ func Migration() {
 		&models.Company{},
 		&models.Commodity{},
 		&models.Listing{},
+		&models.Announcement{},
 	)
 
 	if err != nil {

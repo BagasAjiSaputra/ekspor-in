@@ -111,11 +111,19 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center p-6 relative overflow-hidden font-body">
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-body">
+            {/* Background Image */}
+            <div 
+                className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2070&auto=format&fit=crop')" }}
+            >
+                <div className="absolute inset-0 bg-[#0a1f0d]/60 mix-blend-multiply"></div>
+                <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+            </div>
             {/* Reset Password Modal */}
             {showResetModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-                    <div className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl border border-gray-100 relative animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white/80 backdrop-blur-2xl rounded-[32px] p-8 w-full max-w-md shadow-2xl border border-white/50 relative animate-in fade-in zoom-in-95 duration-200">
                         <button 
                             onClick={() => { setShowResetModal(false); setResetStep(1); setResetMessage({type:'', text:''}); }}
                             className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
@@ -148,7 +156,7 @@ export default function LoginPage() {
                                         onChange={(e) => setResetEmail(e.target.value)}
                                         disabled={resetLoading}
                                         placeholder="nama@email.com"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                        className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                                     />
                                 </div>
                                 <button type="submit" disabled={resetLoading} className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 mt-2">
@@ -166,7 +174,7 @@ export default function LoginPage() {
                                         onChange={(e) => setResetToken(e.target.value)}
                                         disabled={resetLoading}
                                         placeholder="Misal: fda95189-..."
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                        className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -178,7 +186,7 @@ export default function LoginPage() {
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         disabled={resetLoading}
                                         placeholder="••••••••"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                        className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                                     />
                                 </div>
                                 <button type="submit" disabled={resetLoading} className="w-full bg-primary-dark hover:bg-black text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 mt-2">
@@ -190,18 +198,16 @@ export default function LoginPage() {
                 </div>
             )}
 
-            {/* Background Decoration */}
-            <div className="absolute right-[-10%] top-[-10%] w-[500px] h-[500px] bg-card-bg rounded-full -z-10 blur-3xl opacity-50"></div>
-            <div className="absolute left-[-10%] bottom-[-10%] w-[400px] h-[400px] bg-primary/5 rounded-full -z-10 blur-3xl opacity-50"></div>
+            {/* Background Decoration (Removed) */}
 
             {/* Logo */}
-            <div className="mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                <Link href="/home" className="text-primary font-bold text-4xl tracking-tight mb-2 block">Eksporin</Link>
-                <p className="text-gray-500 font-medium tracking-tight">Gerbang Digital Pertanian Modern</p>
+            <div className="mb-8 text-center animate-in fade-in slide-in-from-top-4 duration-700 relative z-10">
+                <Link href="/home" className="text-white font-extrabold text-5xl tracking-tight mb-2 block drop-shadow-lg">Eksporin</Link>
+                <p className="text-white/90 font-medium tracking-wide drop-shadow-md">Gerbang Digital Pertanian Modern</p>
             </div>
 
             {/* Login Card */}
-            <div className="bg-white w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-primary/5 p-8 md:p-10 border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+            <div className="bg-white/70 backdrop-blur-2xl w-full max-w-[420px] rounded-[32px] shadow-2xl shadow-black/40 p-8 md:p-10 border border-white/50 animate-in fade-in zoom-in-95 duration-500 relative z-10">
                 <div className="mb-8 text-center">
                     <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Masuk</h1>
                     <p className="text-gray-500 text-sm font-medium">Silakan masuk untuk mengelola hasil panen Anda.</p>
@@ -228,14 +234,14 @@ export default function LoginPage() {
                                 onChange={(e) => setFormDataState({ ...formDataState, email: e.target.value })}
                                 required
                                 disabled={isLoading}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kata Sandi</label>
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Kata Sandi</label>
                             {failedAttempts >= 3 && (
                                 <button type="button" onClick={() => setShowResetModal(true)} className="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest animate-in fade-in zoom-in-95 duration-300">
                                     Lupa Kata Sandi?
@@ -243,7 +249,7 @@ export default function LoginPage() {
                             )}
                         </div>
                         <div className="relative group">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors">
                                 <Lock size={18} />
                             </div>
                             <input
@@ -254,7 +260,7 @@ export default function LoginPage() {
                                 onChange={(e) => setFormDataState({ ...formDataState, password: e.target.value })}
                                 required
                                 disabled={isLoading}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-700 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all font-body disabled:opacity-50"
+                                className="w-full bg-white/50 border border-white/40 shadow-inner rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary/40 transition-all font-body disabled:opacity-50"
                             />
                             <button
                                 type="button"
