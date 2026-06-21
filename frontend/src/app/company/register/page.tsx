@@ -4,11 +4,16 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Building2, Phone, MapPin, Loader2, ArrowLeft } from "lucide-react"
 import { RegisterCompany } from "@/features/company/register_company"
+import dynamic from "next/dynamic"
+
+const MapPicker = dynamic(() => import("@/app/create-post/components/Map"), { ssr: false })
 
 export default function RegisterCompanyPage() {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [address, setAddress] = useState("")
+  const [showMapModal, setShowMapModal] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true)
@@ -91,14 +96,26 @@ export default function RegisterCompanyPage() {
 
           {/* Address */}
           <div className="space-y-1.5">
-            <label htmlFor="address" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              <MapPin size={13} strokeWidth={2.5} />
-              Alamat Perusahaan
-            </label>
+            <div className="flex justify-between items-center">
+              <label htmlFor="address" className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <MapPin size={13} strokeWidth={2.5} />
+                Alamat Perusahaan
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="text-xs font-bold text-[#237127] hover:text-white bg-white hover:bg-[#237127] border border-[#237127] transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-lg shadow-sm active:scale-95"
+              >
+                <MapPin size={12} />
+                Pilih dari Peta
+              </button>
+            </div>
             <textarea
               id="address"
               name="address"
               rows={4}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               placeholder="Masukkan alamat lengkap perusahaan"
               required
               disabled={isPending}
@@ -127,6 +144,35 @@ export default function RegisterCompanyPage() {
 
         </form>
       </div>
+
+      {/* Map Modal */}
+      {showMapModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] p-6 w-full max-w-3xl h-[80vh] shadow-2xl border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <MapPin className="text-[#237127]" size={24} />
+                Pilih Lokasi dari Peta
+              </h3>
+              <button 
+                onClick={() => setShowMapModal(false)}
+                className="text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-hidden">
+              <MapPicker 
+                onLocationSelect={(addr) => {
+                  setAddress(addr)
+                }} 
+                onClose={() => setShowMapModal(false)} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

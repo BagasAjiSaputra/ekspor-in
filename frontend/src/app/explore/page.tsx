@@ -287,7 +287,7 @@ export default function ExplorePage() {
                                     const paginatedListings = filteredListings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
                                     return paginatedListings.map((listing: any, index: number) => {
-                                        const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
+                                        const imageUrl = listing.image_url ? `/api-proxy${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
                                         
                                         // Ambil nama dari company atau user atau profile
                                         const publicProfile = profiles[listing.user_id];
@@ -299,7 +299,7 @@ export default function ExplorePage() {
                                         let userPhotoUrl = null;
                                         const rawPhoto = listing.user?.user_image || listing.user?.photo_url || listing.company?.logo_url || publicProfile?.user_image;
                                         if (rawPhoto) {
-                                            userPhotoUrl = rawPhoto.startsWith('http') ? rawPhoto : `${BASE_URL}${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`;
+                                            userPhotoUrl = rawPhoto.startsWith('http') ? rawPhoto : `/api-proxy${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`;
                                         }
 
                                         return (

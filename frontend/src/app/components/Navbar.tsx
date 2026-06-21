@@ -23,7 +23,7 @@ export default function Navbar() {
                     const savedImage = typeof window !== "undefined" ? localStorage.getItem("profile_picture") : null;
                     const rawPhoto = userObj.user_image || userObj.photo_url || savedImage;
                     const finalPhoto = rawPhoto
-                        ? (rawPhoto.startsWith('http') ? rawPhoto : `${BASE_URL}${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`)
+                        ? (rawPhoto.startsWith('http') ? rawPhoto : `/api-proxy${rawPhoto.startsWith('/') ? '' : '/'}${rawPhoto}`)
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name || 'User')}&background=random`;
                     setUserProfileImage(finalPhoto);
                 }

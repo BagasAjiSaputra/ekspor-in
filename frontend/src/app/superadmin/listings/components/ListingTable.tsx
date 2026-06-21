@@ -120,7 +120,7 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
                       <div className="flex items-center gap-3">
                         {item.image_url ? (
                           <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden relative border border-gray-200">
-                            <img src={`${BASE_URL}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} alt={item.title} className="object-cover w-full h-full" />
+                            <img src={`/api-proxy${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} alt={item.title} className="object-cover w-full h-full" />
                           </div>
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center border border-green-100 text-green-600 font-bold text-xs">
@@ -186,7 +186,7 @@ export function ListingTable({ initialListings }: { initialListings: Listing[] }
             <div className="space-y-6">
               {selectedListing.image_url && (
                 <div className="w-full h-48 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200">
-                  <img src={`${BASE_URL}${selectedListing.image_url.startsWith('/') ? '' : '/'}${selectedListing.image_url}`} alt="Foto Komoditas" className="object-cover w-full h-full" />
+                  <img src={`/api-proxy${selectedListing.image_url.startsWith('/') ? '' : '/'}${selectedListing.image_url}`} alt="Foto Komoditas" className="object-cover w-full h-full" />
                 </div>
               )}
 
