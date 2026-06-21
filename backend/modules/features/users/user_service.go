@@ -48,10 +48,6 @@ func LoginUser(email string, password string) (string, error) {
 		return "", errors.New("Invalid Credentials")
 	}
 
-	if user.IsBanned {
-		return "", errors.New("Akun Anda telah dibanned")
-	}
-
 	token, err := utils.GenerateToken(user.ID, user.Email, string(user.Role))
 
 	if err != nil {

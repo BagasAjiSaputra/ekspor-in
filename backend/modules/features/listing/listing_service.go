@@ -96,27 +96,6 @@ func GetListingByIDService(id uuid.UUID) ([]models.Listing, error) {
 	return listing, nil
 }
 
-func DeleteListingService(id uuid.UUID, userID uuid.UUID, role string) (*models.Listing, error) {
-
-	listing, err := GetListingByListingID(id)
-
-	if err != nil {
-		return nil, errors.New("Listing Tidak Ditemukan")
-	}
-
-	if role != "admin" && listing.UserID != userID {
-		return nil, errors.New("Unauthorized to delete this listing")
-	}
-
-	err = DeleteListing(id)
-
-	if err != nil {
-		return nil, errors.New("Gagal Menghapus Listing")
-	}
-
-	return listing, nil
-}
-
 func UpdateListingService(input *UpdateListingRequest) error {
 	if input.ID == uuid.Nil {
 		return errors.New("Listing ID Invalid")

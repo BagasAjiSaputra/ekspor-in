@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"eksporin/config"
-	"eksporin/models"
 	"eksporin/modules/utils"
 	"net/http"
 
@@ -72,17 +70,6 @@ func JWTAuth(next http.Handler) http.Handler {
 		role, ok := claims["role"].(string)
 		if !ok {
 			utils.Error(w, "No Roles", http.StatusUnauthorized)
-			return
-		}
-
-		var user models.User
-		if err := config.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-			utils.Error(w, "User Tidak Ditemukan", http.StatusUnauthorized)
-			return
-		}
-
-		if user.IsBanned {
-			utils.Error(w, "Akun Anda telah dibanned", http.StatusForbidden)
 			return
 		}
 
