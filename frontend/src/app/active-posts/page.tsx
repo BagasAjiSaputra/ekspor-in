@@ -270,7 +270,7 @@ export default function ActivePostsPage() {
                                                     <div className="w-16 h-16 rounded-2xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
                                                         {post.image_url ? (
                                                             <img 
-                                                                src={`${BASE_URL}${post.image_url.startsWith('/') ? '' : '/'}${post.image_url}`} 
+                                                                src={`/api-proxy${post.image_url.startsWith('/') ? '' : '/'}${post.image_url}`} 
                                                                 alt={post.title} 
                                                                 className="w-full h-full object-cover" 
                                                             />
