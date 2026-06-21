@@ -68,7 +68,10 @@
 					},
 					"request": {
 						"auth": {
-							"type": "noauth"
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
 						},
 						"method": "GET",
 						"header": [],
@@ -157,7 +160,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\" : \"Bagasht\",\n    \"email\": \"bagas199s8gmail.com\",\n    \"password\" : \"asdfasdf\"\n}"
+							"raw": ""
 						},
 						"url": "{{BASE_URL}}/api/logout"
 					},
@@ -233,7 +236,8 @@
 					"name": "Get Role User",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": "{{BASE_URL}}/api/role"
 					},
 					"response": []
 				}
@@ -294,7 +298,8 @@
 					"name": "Get Company",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": "{{BASE_URL}}/api/company"
 					},
 					"response": []
 				}
@@ -379,7 +384,8 @@
 					"name": "Get Commodity",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": "{{BASE_URL}}/api/commodity"
 					},
 					"response": []
 				}
@@ -392,7 +398,10 @@
 					"name": "Create Listing",
 					"request": {
 						"auth": {
-							"type": "noauth"
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
 						},
 						"method": "POST",
 						"header": [],
@@ -533,7 +542,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"commodity_id\" : \"74672112-2e5b-43de-8f8b-5dccc5ec9b39\",\n    \"company_id\" : \"b33b7fb2-7373-48fd-ba72-408673c18855\",\n    \"title\" : \"Jagonk\",\n    \"description\" : \"Jagonks\",\n    \"min_volume\" : 500.5,\n    \"quality\" : \"Kekeringan 50%\",\n    \"price_buy\" : 12000,\n    \"location\" : \"http.Googlemaps\",\n    \"address\" : \"jalan peterongan jkt\"\n}"
+							"raw": ""
 						},
 						"url": "{{BASE_URL}}/listing"
 					},
