@@ -28,7 +28,7 @@ const LinkedinIcon = ({ size = 18 }: { size?: number }) => (
 export default function Footer() {
     return (
         <footer className="bg-bg-soft pt-16 pb-8 border-t border-gray-200 mt-20">
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
                 <div className="col-span-1 md:col-span-1">
                     <div className="text-primary font-bold text-2xl mb-6">Eksporin</div>
                     <p className="text-gray-500 text-sm leading-relaxed max-w-xs">

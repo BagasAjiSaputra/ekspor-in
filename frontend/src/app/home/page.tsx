@@ -158,10 +158,16 @@ const SearchBox = ({ onSearch, availableCommodities }: { onSearch: (loc: string,
 
 const RequestCard = ({ id, title, company, location, volume, price, type, bgColor, imageUrl, latitude, longitude }: any) => (
     <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
-        <div className="relative h-48 bg-gray-200 shrink-0">
+        <div className="relative h-48 bg-gray-200 shrink-0 overflow-hidden">
             {/* Image Display */}
             {imageUrl ? (
-                <img src={imageUrl} alt={title || company} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <Image 
+                    src={imageUrl} 
+                    alt={title || company} 
+                    fill 
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
             ) : (
                 <div className={`absolute inset-0 bg-gradient-to-br ${bgColor} opacity-60 group-hover:scale-105 transition-transform duration-500`}></div>
             )}
@@ -237,7 +243,21 @@ export default function HomePage() {
 
                 const response = await getListings();
                 // Assumes response is an array or has a data property that is an array
-                const data = Array.isArray(response) ? response : (response as any)?.data || [];
+                let data = Array.isArray(response) ? response : (response as any)?.data || [];
+                
+                // Map commodities to listings to show names instead of undefined
+                try {
+                    const commRes = await GetAllCommodity();
+                    if (commRes && !commRes.error) {
+                        data = data.map((item: any) => {
+                            const commodity = commRes.find((c: any) => c.id === item.commodity_id);
+                            if (commodity) {
+                                item.commodity = commodity;
+                            }
+                            return item;
+                        });
+                    }
+                } catch(e) {}
                 
                 // Fallback: Jika tidak bisa fetch dari GetAllCommodity (misal karena belum login / 401),
                 // maka ambil list komoditas dari data listing yang tersedia.
@@ -245,6 +265,9 @@ export default function HomePage() {
                     const activeCommodities = Array.from(new Set(data.map((l: any) => l.commodity?.name).filter(Boolean))) as string[];
                     setAvailableCommodities(activeCommodities);
                 }
+                
+                // Sort by newest first
+                data.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
                 
                 setListings(data);
                 setFilteredListings(data);
@@ -275,7 +298,7 @@ export default function HomePage() {
 
 
             {/* Hero Section Full Width */}
-            <section className="relative isolate pt-20 pb-28 flex flex-col items-center min-h-[550px] overflow-hidden justify-start w-full">
+            <section className="relative isolate pt-12 md:pt-20 pb-20 md:pb-28 flex flex-col items-center min-h-[500px] md:min-h-[550px] overflow-hidden justify-start w-full">
                     {/* Video Background */}
                     <video
                         autoPlay
@@ -296,11 +319,11 @@ export default function HomePage() {
                         Edisi Panen 2026
                     </div>
 
-                    <h1 className="text-6xl font-extrabold text-[#113114] leading-[1.1] max-w-2xl drop-shadow-sm">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#113114] leading-[1.2] md:leading-[1.1] max-w-2xl drop-shadow-sm text-center md:text-left">
                         Temukan Permintaan <span className="text-primary">Komoditas</span> Terdekat
                     </h1>
 
-                    <p className="text-gray-800 font-medium mt-6 max-w-lg text-lg leading-relaxed drop-shadow-sm">
+                    <p className="text-gray-800 font-medium mt-4 md:mt-6 max-w-lg text-base md:text-lg leading-relaxed drop-shadow-sm text-center md:text-left">
                         Hubungkan hasil bumi Anda langsung ke pengepul terverifikasi dengan harga pasar terbaik hari ini.
                     </p>
 
@@ -319,7 +342,7 @@ export default function HomePage() {
                             Eksplorasi komoditas terbaik dari berbagai daerah di Indonesia yang siap untuk pasar global.
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {[
                             { name: "Kopi & Teh", icon: <Coffee size={32} />, color: "bg-amber-50 text-amber-600 border-amber-100" },
                             { name: "Rempah Nusantara", icon: <Leaf size={32} />, color: "bg-green-50 text-green-600 border-green-100" },
@@ -389,20 +412,20 @@ export default function HomePage() {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
                     
-                    <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/10 text-center">
-                        <div className="flex flex-col items-center justify-center">
+                    <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 divide-y sm:divide-y-0 sm:divide-x divide-white/10 text-center">
+                        <div className="flex flex-col items-center justify-center pt-4 sm:pt-0">
                             <div className="text-4xl font-extrabold text-white mb-2">50+</div>
                             <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Negara Tujuan</div>
                         </div>
-                        <div className="flex flex-col items-center justify-center border-white/10">
+                        <div className="flex flex-col items-center justify-center border-white/10 pt-8 sm:pt-0">
                             <div className="text-4xl font-extrabold text-[#B8E5B3] mb-2">10K+</div>
                             <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Ton Komoditas</div>
                         </div>
-                        <div className="flex flex-col items-center justify-center border-white/10">
+                        <div className="flex flex-col items-center justify-center border-white/10 pt-8 sm:pt-0">
                             <div className="text-4xl font-extrabold text-white mb-2">2.5K+</div>
                             <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Pengepul Aktif</div>
                         </div>
-                        <div className="flex flex-col items-center justify-center border-white/10">
+                        <div className="flex flex-col items-center justify-center border-white/10 pt-8 sm:pt-0">
                             <div className="text-4xl font-extrabold text-[#B8E5B3] mb-2">99%</div>
                             <div className="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Tingkat Sukses</div>
                         </div>
@@ -410,14 +433,14 @@ export default function HomePage() {
                 </section>
 
                 {/* Call To Action */}
-                <section className="my-24 text-center max-w-3xl mx-auto">
-                    <h2 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                <section className="my-20 md:my-24 text-center max-w-3xl mx-auto">
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
                         Siap Mengembangkan Jaringan Ekspor Anda?
                     </h2>
                     <p className="text-lg text-gray-500 mt-6 mb-10">
                         Bergabunglah dengan ribuan pengepul lainnya dan temukan pembeli potensial dari seluruh dunia dengan platform Eksporin.
                     </p>
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button 
                             onClick={(e) => {
                                 if (isLoggedIn) {
@@ -431,8 +454,8 @@ export default function HomePage() {
                         >
                             Mulai Sekarang Gratis
                         </button>
-                        <Link href="/explore">
-                            <button className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 hover:-translate-y-1 active:translate-y-0 shadow-sm">
+                        <Link href="/explore" className="w-full sm:w-auto">
+                            <button className="w-full sm:w-auto justify-center bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 hover:-translate-y-1 active:translate-y-0 shadow-sm">
                                 Lihat Pasar
                                 <ArrowRight size={18} />
                             </button>

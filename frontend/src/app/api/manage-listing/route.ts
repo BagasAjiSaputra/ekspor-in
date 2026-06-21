@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { BASE_URL } from '@/features/global/url';
 
 export async function POST(req: Request) {
   try {
@@ -6,7 +7,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     
     // Kirim secara manual ke backend Go (Bypass bug rewrite Next.js)
-    const backendUrl = "http://43.157.248.229:8080/api/manage-listing";
+    const backendUrl = `${BASE_URL}/api/manage-listing`;
     
     const response = await fetch(backendUrl, {
       method: "POST",
