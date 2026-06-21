@@ -12,7 +12,9 @@ export async function UpdateListingAction(id: string, formData: FormData) {
       return { success: false, message: "Unauthorized: No token found" };
     }
 
-    const res = await fetch(`${BASE_URL}/api/manage-listing/${id}`, {
+    formData.append("id", id);
+
+    const res = await fetch(`${BASE_URL}/api/manage-listing`, {
       method: "PUT",
       headers: {
         Cookie: `token=${encodeURIComponent(token)}`,
@@ -21,8 +23,17 @@ export async function UpdateListingAction(id: string, formData: FormData) {
       body: formData,
     });
 
-    const data = await res.json().catch(() => ({}));
+    const dataText = await res.text();
+    let data;
+    try {
+        data = JSON.parse(dataText);
+    } catch {
+        data = { message: dataText };
+    }
+    
     console.log("UpdateListing backend response:", res.status, data);
+    const fs = require('fs');
+    fs.appendFileSync('c:/Users/fatwa/update_log.txt', `[${new Date().toISOString()}] PUT id=${id} status=${res.status} data=${JSON.stringify(data)}\n`);
 
     if (!res.ok) {
       return { success: false, message: data.error || data.message || "Failed to update listing" };
@@ -30,6 +41,8 @@ export async function UpdateListingAction(id: string, formData: FormData) {
 
     return { success: true, message: data.message || "Berhasil Memperbarui Listing" };
   } catch (error: any) {
+    const fs = require('fs');
+    fs.appendFileSync('c:/Users/fatwa/update_log.txt', `[${new Date().toISOString()}] ERROR: ${error.message}\n`);
     console.error("UpdateListing Error:", error.message);
     return { success: false, message: "Internal Server Error" };
   }
