@@ -16,9 +16,9 @@ import {
     SearchIcon,
     X
 } from "lucide-react";
-import { getListings } from "@/features/listing/get_all_listing";
 import { BASE_URL } from "@/features/global/url";
 import Navbar from "@/app/components/Navbar";
+import { GetAllCommodity } from "@/features/commodity/get_all_commodity";
 
 
 // Brand Icons
@@ -179,22 +179,35 @@ export default function ExplorePage() {
         }
         const fetchListings = async () => {
             try {
-                const response = await getListings();
-                const data = Array.isArray(response) ? response : (response as any)?.data || [];
-                setListings(data);
-
-                // Fetch profiles for unique user_ids
-                const uniqueUserIds = [...new Set(data.map((l: any) => l.user_id).filter(Boolean))];
-                const { GetPublicProfile } = await import('@/features/auth/get_public_profile');
-                const profilesData = await Promise.all(uniqueUserIds.map(userId => GetPublicProfile(userId as string)));
+                // Fetch sequentially to prevent Next.js dev server deadlock
+                const res = await fetch("/api/listing", { cache: "no-store" });
+                const response = await res.json();
                 
-                const profilesMap: Record<string, any> = {};
-                profilesData.forEach((profile, idx) => {
-                    if (profile) {
-                        profilesMap[uniqueUserIds[idx] as string] = profile;
-                    }
-                });
-                setProfiles(profilesMap);
+                let commodities: any[] = [];
+                try {
+                    commodities = await GetAllCommodity();
+                } catch (e) {
+                    // Fallback to empty if error
+                }
+                
+                let data = Array.isArray(response.data) ? response.data : (response as any)?.data?.data || [];
+                
+                // Ensure commodities mapping so we can filter by name
+                if (Array.isArray(commodities)) {
+                    data = data.map((item: any) => {
+                        const commodity = commodities.find((c: any) => c.id === item.commodity_id);
+                        if (commodity) {
+                            item.commodity = commodity;
+                        }
+                        return item;
+                    });
+                }
+                
+                // Sort by newest first
+                data.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+                setListings(data);
+                setProfiles(response.profiles || {});
             } catch (error) {
                 console.error("Failed to fetch listings:", error);
             } finally {
@@ -205,9 +218,40 @@ export default function ExplorePage() {
     }, []);
 
     const filteredListings = listings.filter((l: any) => {
-        if (urlLocFilter && !(l.location?.toLowerCase().includes(urlLocFilter.toLowerCase()) || l.address?.toLowerCase().includes(urlLocFilter.toLowerCase()))) return false;
-        if (urlComFilter && l.commodity?.name !== urlComFilter) return false;
-        if (activeSearch && !(l.title?.toLowerCase().includes(activeSearch.toLowerCase()) || l.commodity?.name?.toLowerCase().includes(activeSearch.toLowerCase()) || l.location?.toLowerCase().includes(activeSearch.toLowerCase()))) return false;
+        if (urlLocFilter) {
+            const stopWords = ['jawa', 'timur', 'barat', 'tengah', 'selatan', 'utara', 'indonesia', 'provinsi', 'kabupaten', 'kota', 'kecamatan', 'desa', 'kelurahan'];
+            const cleanedFilter = urlLocFilter.toLowerCase().replace(/[,.]/g, "").trim();
+            const locTerms = cleanedFilter.split(/\s+/).filter((term: string) => term.length > 2 && !stopWords.includes(term));
+            const targetLoc = ((l.location || "") + " " + (l.address || "")).toLowerCase();
+            
+            const locMatches = locTerms.length > 0 
+                ? locTerms.some((term: string) => targetLoc.includes(term))
+                : targetLoc.includes(cleanedFilter);
+            
+            // Fallback to exact substring match just in case
+            if (!locMatches && !targetLoc.includes(cleanedFilter)) {
+                return false;
+            }
+        }
+        
+        if (urlComFilter) {
+            const commodityName = l.commodity?.name?.toLowerCase() || "";
+            const filterName = urlComFilter.toLowerCase();
+            if (commodityName !== filterName && !commodityName.includes(filterName)) {
+                return false;
+            }
+        }
+        
+        if (activeSearch) {
+            const search = activeSearch.toLowerCase();
+            const titleMatch = l.title?.toLowerCase().includes(search);
+            const comMatch = l.commodity?.name?.toLowerCase().includes(search);
+            const locMatch = l.location?.toLowerCase().includes(search) || l.address?.toLowerCase().includes(search);
+            if (!(titleMatch || comMatch || locMatch)) {
+                return false;
+            }
+        }
+        
         return true;
     });
 
@@ -220,7 +264,7 @@ export default function ExplorePage() {
                     {/* Header & Search Section (Moved to top) */}
                     <div className="w-full">
                         <div className="mb-8">
-                            <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">Pasar Komoditas</h1>
+                            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">Pasar Komoditas</h1>
                             <p className="text-gray-500 text-sm mt-2">Menampilkan <span className="text-primary font-bold">{isLoading ? "..." : filteredListings.length} hasil</span> {activeSearch ? `untuk "${activeSearch}"` : (urlComFilter || urlLocFilter ? "dari filter terpilih" : "keseluruhan")}</p>
                             
                             {(urlLocFilter || urlComFilter) && (
