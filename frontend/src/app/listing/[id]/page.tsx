@@ -158,7 +158,7 @@ export default function ListingDetailPage() {
                                                 (listing.user?.user_image || publicProfile?.user_image)
                                                     ? ((listing.user?.user_image || publicProfile?.user_image).startsWith('http') 
                                                         ? (listing.user?.user_image || publicProfile?.user_image) 
-                                                        : `${BASE_URL}${(listing.user?.user_image || publicProfile?.user_image).startsWith('/') ? '' : '/'}${listing.user?.user_image || publicProfile?.user_image}`)
+                                                        : `/api-proxy${(listing.user?.user_image || publicProfile?.user_image).startsWith('/') ? '' : '/'}${listing.user?.user_image || publicProfile?.user_image}`)
                                                     : `https://avatar.vercel.sh/${listing.company_name || listing.company?.name || listing.user?.name || publicProfile?.name || listing.id}?size=40`
                                             } 
                                             alt="Avatar Pengepul" 

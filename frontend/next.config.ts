@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'http',
+        hostname: '43.134.176.200',
+        port: '8080',
+      },
     ],
   },
   async rewrites() {

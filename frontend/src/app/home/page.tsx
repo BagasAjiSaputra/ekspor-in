@@ -353,7 +353,7 @@ export default function HomePage() {
                                 // Karena UPLOAD_PATH di backend kosong, FileServer membaca dari root folder aplikasi (/app)
                                 // Sedangkan gambar disimpan di /app/storage/uploads/
                                 // Jadi kita harus menambahkan /storage sebelum URL gambarnya
-                                const imageUrl = listing.image_url ? `${BASE_URL}${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
+                                const imageUrl = listing.image_url ? `/api-proxy${listing.image_url.startsWith('/') ? '' : '/'}${listing.image_url}` : null;
                                 
                                 return (
                                 <RequestCard

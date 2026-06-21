@@ -504,7 +504,7 @@ export default function ProfilePage() {
                                             (profileData?.user_image || profileData?.photo_url)
                                                 ? ((profileData?.user_image || profileData?.photo_url).startsWith('http')
                                                     ? (profileData?.user_image || profileData?.photo_url)
-                                                    : `${BASE_URL}${(profileData?.user_image || profileData?.photo_url).startsWith('/') ? '' : '/'}${profileData?.user_image || profileData?.photo_url}`)
+                                                    : `/api-proxy${(profileData?.user_image || profileData?.photo_url).startsWith('/') ? '' : '/'}${profileData?.user_image || profileData?.photo_url}`)
                                                 : `https://avatar.vercel.sh/${profileData?.name?.replace(/\s+/g, '-') || 'user'}?size=128`
                                         )}
                                         alt="Avatar"
