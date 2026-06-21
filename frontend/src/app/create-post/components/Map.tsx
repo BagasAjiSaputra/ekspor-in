@@ -87,8 +87,8 @@ export default function Map({ onLocationSelect, onClose }: MapProps) {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="flex-1 bg-gray-100 relative rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+    <div className="flex flex-col h-full relative min-h-0">
+      <div className="flex-1 min-h-0 bg-gray-100 relative rounded-2xl overflow-hidden shadow-inner border border-gray-200">
         <MapContainer
           center={[-0.7893, 113.9213]} // Indonesia center
           zoom={5}

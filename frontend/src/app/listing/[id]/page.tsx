@@ -100,6 +100,26 @@ export default function ListingDetailPage() {
     const lng = listing.longitude || listing.location_lng;
     const hasCoordinates = lat && lng;
 
+    const handleAcceptOffer = () => {
+        let phone = listing.company?.phone || listing.user?.phone || publicProfile?.phone || publicProfile?.company?.phone;
+        
+        if (!phone) {
+            alert("Nomor WhatsApp pihak terkait belum didaftarkan di profil mereka.");
+            return;
+        }
+
+        let cleanPhone = phone.replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '62' + cleanPhone.substring(1);
+        }
+
+        const targetName = listing.company_name || listing.company?.name || listing.user?.name || publicProfile?.name || "Bapak/Ibu";
+        const message = `Halo ${targetName}, saya melihat postingan *${listing.title}* di Eksporin. Saya tertarik dengan penawaran komoditas sebesar ${displayVolume} ${displayUnit} dengan harga Rp ${price.toLocaleString('id-ID')}/kg. Apakah penawaran ini masih tersedia?`;
+
+        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
+
     return (
         <div className="min-h-screen bg-[#FDFDFD] font-body flex flex-col">
             {/* Header */}
@@ -253,11 +273,11 @@ export default function ListingDetailPage() {
                             </div>
                             
                             <button 
-                                onClick={() => alert("Konfirmasi penawaran berhasil dikirim kepada pihak terkait!")}
-                                className="w-full bg-[#237127] hover:bg-black text-white font-extrabold py-3 px-6 rounded-2xl mt-4 shadow-xl shadow-primary/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 text-base active:translate-y-0"
+                                onClick={handleAcceptOffer}
+                                className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white font-extrabold py-3 px-6 rounded-2xl mt-4 shadow-xl shadow-green-900/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 text-base active:translate-y-0"
                             >
-                                <CheckCircle2 size={20} />
-                                Terima Penawaran
+                                <MessageCircle size={20} />
+                                Lanjut ke WhatsApp
                             </button>
                         </div>
                     </div>

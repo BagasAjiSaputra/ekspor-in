@@ -13,14 +13,16 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api-proxy/:path*',
-        destination: 'http://43.157.248.229:8080/:path*',
+        destination: 'http://43.134.176.200:8080/:path*',
       },
     ]
   },
-  serverActions: {
-    bodySizeLimit: '10mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+      allowedOrigins: ['192.168.100.195', 'localhost', '192.168.1.9'],
+    },
   },
-  allowedDevOrigins: ['192.168.100.195', 'localhost'],
 };
 
 export default nextConfig;

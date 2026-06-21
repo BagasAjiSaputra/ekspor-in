@@ -42,6 +42,8 @@ export default function CreatePostPage() {
         address: "",
         quality: "",
         description: "",
+        whatsapp: "",
+        email: "",
     });
     const [commodities, setCommodities] = useState<any[]>([]);
     const [companyId, setCompanyId] = useState<string>("");
@@ -78,6 +80,12 @@ export default function CreatePostPage() {
                     }
                 } else if (company && company.id) {
                     setCompanyId(company.id);
+                    setFormData(prev => ({
+                        ...prev,
+                        address: company.address || prev.address,
+                        whatsapp: company.phone || "",
+                        email: profile?.email || profile?.user?.email || ""
+                    }));
                 }
                 
                 if (commodityList && commodityList.error) {
@@ -409,6 +417,27 @@ export default function CreatePostPage() {
                                             required
                                             disabled={isLoading}
                                             className="w-full bg-gray-200/50 border border-transparent rounded-[24px] py-4 px-6 text-sm font-bold text-gray-700 focus:outline-none focus:bg-white focus:border-primary/30 transition-all disabled:opacity-50"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nomor WhatsApp</label>
+                                        <input
+                                            type="text"
+                                            value={formData.whatsapp}
+                                            readOnly
+                                            className="w-full bg-gray-100 border border-transparent rounded-[24px] py-4 px-6 text-sm font-bold text-gray-500 focus:outline-none transition-all cursor-not-allowed"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email</label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            readOnly
+                                            className="w-full bg-gray-100 border border-transparent rounded-[24px] py-4 px-6 text-sm font-bold text-gray-500 focus:outline-none transition-all cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
