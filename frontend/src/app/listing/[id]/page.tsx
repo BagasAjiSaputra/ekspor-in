@@ -250,17 +250,26 @@ export default function ListingDetailPage() {
                             </h3>
 
                             <div className="bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-sm flex flex-col">
-                                <div className="h-40 lg:h-48 bg-gray-200 relative w-full z-0 isolate">
+                                <div className="h-40 lg:h-48 bg-gray-200 relative w-full z-0 isolate group">
                                     {/* Full Width Map Preview */}
                                     <MiniMap 
                                         lat={hasCoordinates ? parseFloat(lat) : -0.7893} 
                                         lng={hasCoordinates ? parseFloat(lng) : 113.9213} 
+                                        zoom={hasCoordinates ? 15 : 5}
                                     />
                                     <div className="absolute inset-0 pointer-events-none z-10 shadow-inner"></div>
                                     
                                     {/* Hover Overlay Button */}
-                                    <div className="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity z-20 flex items-center justify-center pointer-events-none">
-                                        <button className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 pointer-events-auto hover:bg-white hover:scale-105 transition-all text-gray-900">
+                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center pointer-events-none">
+                                        <button 
+                                            onClick={() => {
+                                                const mapUrl = hasCoordinates 
+                                                    ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+                                                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(listing.location || listing.address || "Indonesia")}`;
+                                                window.open(mapUrl, '_blank');
+                                            }}
+                                            className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-2 pointer-events-auto hover:bg-white hover:scale-105 transition-all text-gray-900"
+                                        >
                                             <MapPin size={18} className="text-primary" />
                                             Buka Peta Interaktif
                                         </button>

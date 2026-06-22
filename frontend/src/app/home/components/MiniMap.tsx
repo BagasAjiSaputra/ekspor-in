@@ -16,7 +16,7 @@ const customIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-export default function MiniMap({ lat, lng }: { lat: number, lng: number }) {
+export default function MiniMap({ lat, lng, zoom = 15 }: { lat: number, lng: number, zoom?: number }) {
     const [mapKey, setMapKey] = useState<string>("");
 
     useEffect(() => {
@@ -31,7 +31,7 @@ export default function MiniMap({ lat, lng }: { lat: number, lng: number }) {
             <MapContainer 
                 key={mapKey}
                 center={[lat, lng]} 
-                zoom={15} 
+                zoom={zoom} 
                 zoomControl={false} 
                 dragging={false} 
                 doubleClickZoom={false} 
@@ -41,7 +41,8 @@ export default function MiniMap({ lat, lng }: { lat: number, lng: number }) {
                 style={{ width: '100%', height: '100%', zIndex: 0 }}
             >
                 <TileLayer
-                    url="http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
                 <Marker position={[lat, lng]} icon={customIcon} />
             </MapContainer>

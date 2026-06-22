@@ -176,10 +176,10 @@ export default function Map({ onLocationSelect, onClose }: MapProps) {
           zoom={5}
           style={{ height: "100%", width: "100%" }}
         >
-          {/* Using Google Maps Satellite/Hybrid tile layer as requested by the user */}
+          {/* Using OpenStreetMap standard tiles for clear visibility */}
           <TileLayer
-            attribution='&copy; <a href="https://www.google.com/intl/en_us/help/terms_maps.html">Google Maps</a>'
-            url="http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <InteractiveMapLogic onLocationSelect={handleSelect} searchedCoords={searchedCoords} />
         </MapContainer>
